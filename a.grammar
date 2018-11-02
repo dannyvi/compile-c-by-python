@@ -1,0 +1,82 @@
+start      :== stmt                                 {{start}}
+stmt       :== "if" "(" "C" ")"
+               "S1" "else"
+                "S2"
+                    {{stmt1}}
+stmt       :== declare                              {{stmt2}}
+declare    :== type ID ";"                          {{declare}}
+type       :== base                                 {{type_}}
+base       :== "int"                                {{base1}}
+base       :== "float"                              {{base2}}
+
+-------------------------------------------------------
+
+import collections
+
+all_labels = []
+
+variables = {}
+
+Variable = collections.namedtuple("Var", ["lexeme", "type", "width"])
+
+class Prop:
+    pass
+
+def get_label():
+    n = 'L' + str(len(all_labels))
+    all_labels.append(n)
+    return n
+
+
+def start(stmt_cb):
+    def callback():
+        end_label = get_label()
+        inh = Prop()
+        inh.next_label = end_label
+        return stmt_cb(inh)
+    return callback
+
+def stmt1(IF, LPAR, c, RPAR, s1, ELSE, s2):
+    def callback(inh):
+        L1 = get_label()
+        C_code = c.code(f_cond=L1)
+        S1_code = s1.code()
+        S2_code = s2.code()
+        inter_code = """\
+        {}
+        {}
+        goto {}
+        label {}
+        {}""".format(C_code, S1_code, inh.next_label, L1, S2_code)
+        return inter_code
+    return callback
+
+def stmt2(declare_cb):
+    def callback(inh):
+        return declare_cb()
+    return callback
+
+def declare(_type, _id, end):
+    def callback():
+        var = Variable(_id.value, _type.name, _type.width)
+        variables[_id.value] = var
+        return ''
+    return callback
+
+def type_(base):
+    syn = Prop()
+    syn.name = base.name
+    syn.width = base.width
+    return syn
+
+def base1(integer):
+    syn = Prop()
+    syn.name = 'int'
+    syn.width = 4
+    return syn
+
+def base2(_float):
+    syn = Prop()
+    syn.name = 'float'
+    syn.width = 4
+    return syn

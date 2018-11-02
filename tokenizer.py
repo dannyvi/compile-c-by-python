@@ -11,10 +11,16 @@ Could parse:
 import re
 import collections
 
-Token = collections.namedtuple('Token', ['typ', 'value', 'line', 'column'])
+# Token = collections.namedtuple('Token', ['typ', 'value', 'line', 'column'])
+class Token:
+    def __init__(self, typ, value, line, column):
+        self.typ = typ
+        self.value = value
+        self.line = line
+        self.column = column
 
 
-def load_lex(lex_file):
+def load_lex(lex_file='a.lexeme'):
 
     def strip_comments(code):
         code = str(code)
@@ -26,13 +32,13 @@ def load_lex(lex_file):
     with open(lex_file, 'r') as f:
         line = [strip_comments(i) for i in f.read().splitlines()
                 if strip_comments(i)]
+        # print(line)
         token_spec = list(map(lambda x: eval_spec(re.split("\s*:=\s*", x)),
                               line))
         return token_spec
 
 
 def tokenizer(code, token_specification=load_lex('a.lexeme')):
-    keywords = {'if', 'else'}
     tok_regex = '|'.join('(?P<%s>%s)' % pair for
                          pair in token_specification)
     line_num = 1
@@ -48,8 +54,6 @@ def tokenizer(code, token_specification=load_lex('a.lexeme')):
         elif kind == 'MISMATCH':
             raise RuntimeError(f'{value!r} unexpected on line {line_num}')
         else:
-            if kind == 'ID' and value in keywords:
-                kind = value
             if kind == 'NODE':
                 kind = value
             column = mo.start() - line_start

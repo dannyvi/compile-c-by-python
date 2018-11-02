@@ -2,26 +2,69 @@ import queue
 from typing import Set
 from tokenizer import Token
 import collections
+import re
 
-Production = collections.namedtuple("Production", ["head", "body"])
+Production = collections.namedtuple("Production", ["head", "body", "rule"])
 
-grammar = [Production("startsup", ("start", )),
-           Production("start", ("stmt", )),
-           Production("stmt", ("if", "(", "C", ")", "S1", "else", "S2")),
-           Production("stmt", ("declare", )),
-           Production("declare", ("type", "ID", ";")),
-           #Production("type", ("base", "subscript")),
-           Production("type", ("base",)),
-           Production("base", ("int",)),
-           Production("base", ("float",)),
-           #Production("subscript", ("[", "num", "]")),
-          ]
-#semantic = [startsup, start, stmt, ]
-terminals = ("if", "(", "C", ")", "S1", "else", "S2", "ID", "int", "float",
-             ";", '$')
-n_terminals = ("startsup", "start", "stmt", "declare", "type", "base")
-all_symbols = terminals + n_terminals
 
+NTerm = collections.namedtuple("none_terminal", ["symbol"])
+NTerm.__str__ = lambda self: f"<{self.symbol}>"
+NTerm.__repr__ = NTerm.__str__
+
+Term = collections.namedtuple("terminal", ["symbol"])
+Term.__str__ = lambda self: f"({self.symbol})"
+Term.__repr__ = Term.__str__
+
+Value = collections.namedtuple("value", ["symbol"])
+Value.__str__ = lambda self: f"({self.symbol})"
+Value.__repr__ = Value.__str__
+
+namespace = {}
+
+
+def load_grammar(grammar_file="a.grammar"):
+
+    n_terminals = []
+    terminals = []
+    term_values = []
+    all_symbols = []
+    grammar = []
+
+    with open(grammar_file) as f:
+        raw_grammar, definitions = re.split(r"(?m)^[\s-]+[-]+[\s-]+$", f.read())
+        # augment syntax
+        raw_grammar = 'startsup :== start "$" {{startsup}}\n' + raw_grammar
+        definitions = definitions + '\n\ndef startsup(f):\n    return f()'
+        exec(definitions, namespace)
+        pat = r'(?s)(?P<NTerm>\w+)\s+:==\s*(?P<Body>.+?)[\s\n]*{{(?P<Def>.+?)}}'
+        prods = re.findall(pat, raw_grammar)
+
+        n_terminals = list(set([p[0] for p in prods]))
+        products = [p[1] for p in prods]
+        bodies = " ".join(products)
+        ele_pat = r'"(?P<Value>\S+)"|(?P<Term>\S+)'
+        for mo in re.finditer(ele_pat, bodies):
+            kind = mo.lastgroup
+            value = mo.group(kind)
+            if kind == 'Term':
+                if value not in n_terminals:
+                    if value not in terminals:
+                        terminals.append(value)
+            else:  # kind == 'Value'
+                if value not in term_values:
+                    term_values.append(value)
+        all_symbols =  term_values + terminals + n_terminals
+        for prod in prods:
+            body_string = prod[1].replace('"', '').replace("'", '')
+            body = tuple(re.split(r'[\n\s]+', body_string))
+            production = Production(prod[0], body, namespace[prod[2]])
+            grammar.append(production)
+        return grammar, terminals, n_terminals, term_values, all_symbols
+
+
+grammar, terminals, n_terminals, term_values, all_symbols = load_grammar()
+
+# ------------------------------------------------------------------------------
 
 class Item(object):
     """The Canonical LR(1) Item definition.
@@ -100,7 +143,7 @@ def isnterm(symbol):
 
 
 def isterm(symbol):
-    return symbol in terminals
+    return symbol in terminals + term_values
 
 
 def produce_epsilon(none_terminal):
@@ -162,9 +205,7 @@ def get_closure(cl: Closure, label: int) -> Closure:
         if symbol:
             products = [i for i in grammar if i.head == symbol]
             suffix = item.body[item.pos+1:] + tuple([item.follow])
-            #print('suffix', suffix)
             termins = firsts(suffix)
-            #print(termins)
             for product in products:
                 for terminal in termins:
                     new_item = Item(symbol, product.body, 0, terminal)
@@ -228,6 +269,12 @@ def closure_groups():
 
 
 def get_states_map(closure_group):
+
+    def get_prod_number(symbol, body):
+        for num, prod in enumerate(grammar):
+            if prod.head == symbol and prod.body == body:
+                return num
+
     def get_state_map(closure):
         """ table row like all_symbols list state maps."""
         row = ["." for i in all_symbols]
@@ -241,7 +288,7 @@ def get_states_map(closure_group):
                         if input in n_terminals:
                             row[row_pos] = str(goto_label)
                         # Terminals action shift state
-                        elif input in terminals:
+                        elif input in terminals + term_values:
                             row[row_pos] = "s" + str(goto_label)
         # Terminals reduce action. shape like  [A -> ⍺.  a]
         for row_pos, input in enumerate(all_symbols):
@@ -249,7 +296,8 @@ def get_states_map(closure_group):
                 if item.pos == len(item.body) and \
                         item.follow == input and \
                         item.symbol != 'startsup':
-                    p_num = grammar.index(Production(item.symbol, item.body))
+                    p_num = get_prod_number(item.symbol, item.body)
+                    # grammar.index(Production(item.symbol, item.body))
                     row[row_pos] = 'r' + str(p_num)
         # accept condition 'startsup -> start. , $'
         acc_item = Item('startsup', ('start',), 1, '$')
@@ -272,44 +320,6 @@ def generate_syntax_table():
     return state_map
 
 
-# --------------------------- translate functions ------------------------------
-
-all_labels = []
-
-
-def get_label():
-    n = 'L' + str(len(all_labels))
-    all_labels.append(n)
-    return n
-
-
-def stmt(IF, LPAR, c, RPAR, s1, ELSE, s2):
-    def call(next_label):
-        L1 = get_label()
-        C_code = c.code(f_cond=L1)
-        S1_code = s1.code()
-        S2_code = s2.code()
-        inter_code = """\
-        {} 
-        {}
-        goto {}
-        label {}
-        {}""".format(C_code, S1_code, next_label, L1, S2_code)
-        return inter_code
-    return call
-
-
-def start(stmt):
-    def call():
-        L = get_label()
-        return stmt(L)
-    return call
-
-
-def startsup(f):
-    return f()
-
-
 # --------------------------------- SDT ----------------------------------------
 
 class SDT:
@@ -330,25 +340,24 @@ class SDT:
         else:
             return self.syntax_table[state][all_symbols.index(t)]
 
-
     def ahead(self, token):
         action = self.get_action(self.state_stack[-1], token)
         # shift action push a current state into state_stack
         if action[0] == 's':
             current_state = int(action[1:])
             self.state_stack.append(current_state)
-            #self.push_arg(token)
+            self.push_arg(token)
         elif action[0] == '$':
-            #self.translation = startsup(self.arg_stack[-1])
+            self.translation = grammar[0].rule(self.arg_stack[-1])
             self.accept = True   # success
             # print('SUCCESS')
-            #print(self.translation)
+            print(self.translation)
         # reduce action reduct a production and push
         elif action[0] == 'r':
             # get the production in grammar
             number = int(action[1:])
             production = grammar[number]
-            head, body = production
+            head, body, rule = production
             # pop the states of production body
             for _ in body:
                 self.state_stack.pop()
@@ -357,12 +366,12 @@ class SDT:
             self.state_stack.append(int(state))
 
             # translations
-            #args = []
-            #for _ in body:
-            #    arg = self.arg_stack.pop()
-            #    args.insert(0, arg)
-            #translation = globals().get(head).__call__(*args)
-            #self.arg_stack.append(translation)
+            args = []
+            for _ in body:
+                arg = self.arg_stack.pop()
+                args.insert(0, arg)
+            translation = rule(*args)
+            self.arg_stack.append(translation)
 
             # reduce actions does not consume a token,
             # only when shifting, a token was consume and passed
@@ -398,15 +407,16 @@ if __name__ == "__main__":
     from tokenizer import tokenizer
 
     token_stream = tokenizer('int a;')
+    # token_stream = tokenizer('if (C) S1 else S2')
     sdt = SDT()
     sdt.parse(token_stream)
     g = closure_groups()
-    state_map = get_states_map(g)
+    _state_map = get_states_map(g)
     args = ''.join(list(map(lambda x: '{:'+str(max(5, len(x)+2))+'s}',
                             all_symbols)))
     s = "{:10s}" + args
     head = ['state', ] + list(all_symbols)
     print(s.format(*head))
-    for j, i in enumerate(state_map):
-        state = [str(j), ] + i
-        print(s.format(*state))
+    for j, i in enumerate(_state_map):
+        _state = [str(j), ] + i
+        print(s.format(*_state))
