@@ -13,20 +13,28 @@ import collections
 
 Token = collections.namedtuple('Token', ['typ', 'value', 'line', 'column'])
 
-def tokenizer(code):
+
+def load_lex(lex_file):
+
+    def strip_comments(code):
+        code = str(code)
+        return re.sub(r'(?m)^ *#.*\n?', '', code)
+
+    def eval_spec(t):
+        return t[0], eval(t[1])
+
+    with open(lex_file, 'r') as f:
+        line = [strip_comments(i) for i in f.read().splitlines()
+                if strip_comments(i)]
+        token_spec = list(map(lambda x: eval_spec(re.split("\s*:=\s*", x)),
+                              line))
+        return token_spec
+
+
+def tokenizer(code, token_specification=load_lex('a.lexeme')):
     keywords = {'if', 'else'}
-    token_specification = [
-        ('NUMBER',  r'\d+(\.\d*)?'),  # Integer or decimal number
-        ('ASSIGN',  r'='),           # Assignment operator
-        # (';',     r';'),            # Statement terminator
-        ('NODE', r'S1|S2|C'),
-        ('ID',      r'[A-Za-z]+'),    # Identifiers
-        ('DELIMITER',      r'[(),;]'),      # DELIMITER
-        ('NEWLINE', r'\n'),           # Line endings
-        ('SKIP',    r'[ \t]+'),       # Skip over spaces and tabs
-        ('MISMATCH',r'.'),            # Any other character
-    ]
-    tok_regex = '|'.join('(?P<%s>%s)' % pair for pair in token_specification)
+    tok_regex = '|'.join('(?P<%s>%s)' % pair for
+                         pair in token_specification)
     line_num = 1
     line_start = 0
     for mo in re.finditer(tok_regex, code):
@@ -46,4 +54,3 @@ def tokenizer(code):
                 kind = value
             column = mo.start() - line_start
             yield Token(kind, value, line_num, column)
-
