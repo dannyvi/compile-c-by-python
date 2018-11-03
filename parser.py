@@ -7,17 +7,39 @@ import re
 Production = collections.namedtuple("Production", ["head", "body", "rule"])
 
 
-NTerm = collections.namedtuple("none_terminal", ["symbol"])
-NTerm.__str__ = lambda self: f"<{self.symbol}>"
-NTerm.__repr__ = NTerm.__str__
+class Symbol:
+    def __init__(self, symbol):
+        self.symbol = symbol
 
-Term = collections.namedtuple("terminal", ["symbol"])
-Term.__str__ = lambda self: f"({self.symbol})"
-Term.__repr__ = Term.__str__
+    def __repr__(self):
+        return self.__str__()
 
-Value = collections.namedtuple("value", ["symbol"])
-Value.__str__ = lambda self: f"({self.symbol})"
-Value.__repr__ = Value.__str__
+    def __format__(self, format_spec):
+        return format(self.__str__(), format_spec)
+
+    def __eq__(self, other):
+        return self.symbol == other.symbol and type(self) == type(other)
+
+    def __hash__(self):
+        return hash(self.__str__())
+
+
+
+class NTerm(Symbol):
+    def __str__(self):
+        return f"<{self.symbol}>"
+
+
+class Term(Symbol):
+    def __str__(self):
+        return f"[{self.symbol}]"
+
+
+class Value(Symbol):
+    def __str__(self):
+        return f"⋅{self.symbol}⋅"
+
+
 
 namespace = {}
 
@@ -39,25 +61,38 @@ def load_grammar(grammar_file="a.grammar"):
         pat = r'(?s)(?P<NTerm>\w+)\s+:==\s*(?P<Body>.+?)[\s\n]*{{(?P<Def>.+?)}}'
         prods = re.findall(pat, raw_grammar)
 
-        n_terminals = list(set([p[0] for p in prods]))
+        n_terminals = list(set([NTerm(p[0]) for p in prods]))
         products = [p[1] for p in prods]
         bodies = " ".join(products)
-        ele_pat = r'"(?P<Value>\S+)"|(?P<Term>\S+)'
+        ele_pat = r'(["\'])(?P<Value>\S+)\1|(?P<Term>\S+)'
         for mo in re.finditer(ele_pat, bodies):
             kind = mo.lastgroup
             value = mo.group(kind)
             if kind == 'Term':
-                if value not in n_terminals:
-                    if value not in terminals:
-                        terminals.append(value)
+                if NTerm(value) not in n_terminals:
+                    if Term(value) not in terminals:
+                        terminals.append(Term(value))
             else:  # kind == 'Value'
-                if value not in term_values:
-                    term_values.append(value)
+                if Value(value) not in term_values:
+                    term_values.append(Value(value))
         all_symbols =  term_values + terminals + n_terminals
+
+        def seperate_body_symbols(body):
+            body_tuple = tuple(re.split(r'[\n\s]+', body))
+
+            def symbolic(n):
+                if NTerm(n) in n_terminals:
+                    return NTerm(n)
+                elif Term(n) in terminals:
+                    return Term(n)
+                else:
+                    return Value(n[1:-1])
+            return tuple(map(symbolic, body_tuple))
+
         for prod in prods:
-            body_string = prod[1].replace('"', '').replace("'", '')
-            body = tuple(re.split(r'[\n\s]+', body_string))
-            production = Production(prod[0], body, namespace[prod[2]])
+            body_string = prod[1]
+            body = seperate_body_symbols(body_string)
+            production = Production(NTerm(prod[0]), body, namespace[prod[2]])
             grammar.append(production)
         return grammar, terminals, n_terminals, term_values, all_symbols
 
@@ -69,30 +104,30 @@ grammar, terminals, n_terminals, term_values, all_symbols = load_grammar()
 class Item(object):
     """The Canonical LR(1) Item definition.
 
-    :param symbol: str, the left part of production.
+    :param head: str, the left part of production.
     :param body: str, the right part of production.
     :param dot: int, current position in the item.
     :param follow: str, possible input for the current configuration.
     """
 
-    def __init__(self, symbol, body, dot, follow):
-        self.symbol = symbol
+    def __init__(self, head, body, dot, follow):
+        self.head = head
         self.body = body
         self.pos = dot
         self.follow = follow
 
     def __str__(self):
-        p = list(self.body)
+        p = list(map(lambda x: x.__str__(), self.body))
         p.insert(self.pos, '◆')
         pr = ' '.join(p)
-        return "[{}]  {} -> {}".format( self.follow, self.symbol, pr)
+        return "[{}]  {} -> {}".format(self.follow, self.head, pr)
 
     def __repr__(self):
         return "<Item:{} >\n".format(self.__str__())
 
     def __eq__(self, other):
         if isinstance(other, Item):
-            return ((self.symbol == other.symbol) and
+            return ((self.head == other.head) and
                     (self.body == other.body) and
                     (self.pos == other.pos) and
                     (self.follow == other.follow))
@@ -187,7 +222,7 @@ def get_closure(cl: Closure, label: int) -> Closure:
 
     The implied Items are the productions of the None terminals after the
     current position, which put a dot on the head."""
-    def get_nterm(item):
+    def get_body_nterm(item):
         pos, prod = (item.pos, item.body)
         if pos < len(prod):
             symbol = prod[pos]
@@ -201,7 +236,7 @@ def get_closure(cl: Closure, label: int) -> Closure:
         q.put(i)
     while not q.empty():
         item = q.get()
-        symbol = get_nterm(item)
+        symbol = get_body_nterm(item)
         if symbol:
             products = [i for i in grammar if i.head == symbol]
             suffix = item.body[item.pos+1:] + tuple([item.follow])
@@ -216,7 +251,7 @@ def get_closure(cl: Closure, label: int) -> Closure:
     return c
 
 
-def goto(clos: Closure, tok_type: str) -> Closure:
+def goto(clos: Closure, tok_type) -> Closure:
     """a closure that could get from the current closure by input a letter.
 
     :param clos: the current closure.
@@ -226,8 +261,9 @@ def goto(clos: Closure, tok_type: str) -> Closure:
     item_set = set()
     for item in clos.sets:
         dot, prod = (item.pos, item.body)
-        if dot < len(prod) and prod[dot] == tok_type:
-            new_item = Item(item.symbol,
+        if dot < len(prod) and prod[dot] == tok_type and \
+                isinstance(prod[dot], type(tok_type)):
+            new_item = Item(item.head,
                             item.body,
                             item.pos + 1,
                             item.follow)
@@ -244,7 +280,7 @@ def closure_groups():
         return None
     group = set()
     label = 0
-    start_item = Item('startsup', ('start',), 0, '$')
+    start_item = Item(NTerm('startsup'), (NTerm('start'),), 0, Value('$'))
     start = get_closure(Closure({start_item}), label)
     q = queue.Queue()
     q.put(start)
@@ -295,15 +331,15 @@ def get_states_map(closure_group):
             for item in closure:
                 if item.pos == len(item.body) and \
                         item.follow == input and \
-                        item.symbol != 'startsup':
-                    p_num = get_prod_number(item.symbol, item.body)
+                        item.head.symbol != 'startsup':
+                    p_num = get_prod_number(item.head, item.body)
                     # grammar.index(Production(item.symbol, item.body))
                     row[row_pos] = 'r' + str(p_num)
         # accept condition 'startsup -> start. , $'
-        acc_item = Item('startsup', ('start',), 1, '$')
+        acc_item = Item(NTerm('startsup'), (NTerm('start'),), 1, Value('$'))
         if acc_item in closure:
-            input = '$'
-            row_pos = all_symbols.index('$')
+            input = Value('$')
+            row_pos = all_symbols.index(Value('$'))
             row[row_pos] = '$'
         return row
 
@@ -330,15 +366,15 @@ class SDT:
         self.accept = False
         self.translation = ''
 
-    def get_action(self, state, t):
+    def get_action(self, stt, t):
         if isinstance(t, Token):
             try:
-                return self.syntax_table[state][all_symbols.index(t.value)]
+                return self.syntax_table[stt][all_symbols.index(Value(t.value))]
             except ValueError:
-                return self.syntax_table[state][all_symbols.index(t.typ)]
-        # t is a none_terminal str
+                return self.syntax_table[stt][all_symbols.index(Term(t.typ))]
+        # t is a none_terminal NTerm instance
         else:
-            return self.syntax_table[state][all_symbols.index(t)]
+            return self.syntax_table[stt][all_symbols.index(t)]
 
     def ahead(self, token):
         action = self.get_action(self.state_stack[-1], token)
@@ -351,7 +387,7 @@ class SDT:
             self.translation = grammar[0].rule(self.arg_stack[-1])
             self.accept = True   # success
             # print('SUCCESS')
-            print(self.translation)
+            # print(self.translation)
         # reduce action reduct a production and push
         elif action[0] == 'r':
             # get the production in grammar
@@ -395,7 +431,7 @@ class SDT:
             token.code = lambda f_cond: 'Ccode Cfalse = {}'.format(f_cond)
         elif token.typ == 'S1':
             token.code = lambda : 'S1code'
-        elif token.typ == 'S2':
+        elif token.typ == 'stmts':
             token.code = lambda : 'S2code'
         self.arg_stack.append(token)
 
@@ -406,13 +442,9 @@ class SDT:
 if __name__ == "__main__":
     from tokenizer import tokenizer
 
-    token_stream = tokenizer('int a;')
-    # token_stream = tokenizer('if (C) S1 else S2')
-    sdt = SDT()
-    sdt.parse(token_stream)
     g = closure_groups()
     _state_map = get_states_map(g)
-    args = ''.join(list(map(lambda x: '{:'+str(max(5, len(x)+2))+'s}',
+    args = ''.join(list(map(lambda x: '{:'+str(max(5, len(x.__str__())+2))+'s}',
                             all_symbols)))
     s = "{:10s}" + args
     head = ['state', ] + list(all_symbols)
@@ -420,3 +452,9 @@ if __name__ == "__main__":
     for j, i in enumerate(_state_map):
         _state = [str(j), ] + i
         print(s.format(*_state))
+
+    # token_stream = tokenizer('int a;int b; float c;')
+    token_stream = tokenizer('if (C) S1 else stmts')
+    sdt = SDT()
+    sdt.parse(token_stream)
+    print(sdt.translation)

@@ -33,9 +33,8 @@ def load_lex(lex_file='a.lexeme'):
         line = [strip_comments(i) for i in f.read().splitlines()
                 if strip_comments(i)]
         # print(line)
-        token_spec = list(map(lambda x: eval_spec(re.split("\s*:=\s*", x)),
-                              line))
-        return token_spec
+        tokens = list(map(lambda x: eval_spec(re.split("\s*:=\s*", x)), line))
+        return tokens
 
 
 def tokenizer(code, token_specification=load_lex('a.lexeme')):

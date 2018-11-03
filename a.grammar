@@ -1,11 +1,13 @@
-start      :== stmt                                 {{start}}
+start      :== stmts                                {{start}}
+stmts      :== stmts stmt                           {{stmts1}}
+stmts      :== stmt                                 {{stmts2}}
 stmt       :== "if" "(" "C" ")"
                "S1" "else"
-                "S2"
-                    {{stmt1}}
+                "stmts"
+                                           {{stmt1}}
 stmt       :== declare                              {{stmt2}}
 declare    :== type ID ";"                          {{declare}}
-type       :== base                                 {{type_}}
+type       :== base                                 {{type1}}
 base       :== "int"                                {{base1}}
 base       :== "float"                              {{base2}}
 
@@ -15,9 +17,9 @@ import collections
 
 all_labels = []
 
-variables = {}
+symbol_table = {}
 
-Variable = collections.namedtuple("Var", ["lexeme", "type", "width"])
+Symbol = collections.namedtuple("Symbol", ["name", "type", "width"])
 
 class Prop:
     pass
@@ -28,13 +30,30 @@ def get_label():
     return n
 
 
-def start(stmt_cb):
+def start(stmts_cb):
+    def callback():
+        return stmts_cb()
+    return callback
+
+
+def stmts1(stmts_cb, stmt_cb):
+    def callback():
+        s = stmts_cb()
+        end_label = get_label()
+        inh = Prop()
+        inh.next_label = end_label
+        trans = s + stmt_cb(inh)
+        return trans
+    return callback
+
+def stmts2(stmt_cb):
     def callback():
         end_label = get_label()
         inh = Prop()
         inh.next_label = end_label
         return stmt_cb(inh)
     return callback
+
 
 def stmt1(IF, LPAR, c, RPAR, s1, ELSE, s2):
     def callback(inh):
@@ -58,12 +77,12 @@ def stmt2(declare_cb):
 
 def declare(_type, _id, end):
     def callback():
-        var = Variable(_id.value, _type.name, _type.width)
-        variables[_id.value] = var
+        symbol = Symbol(_id.value, _type.name, _type.width)
+        symbol_table[_id.value] = symbol
         return ''
     return callback
 
-def type_(base):
+def type1(base):
     syn = Prop()
     syn.name = base.name
     syn.width = base.width
