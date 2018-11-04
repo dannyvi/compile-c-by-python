@@ -24,8 +24,11 @@ class Symbol:
         return hash(self.__str__())
 
 
-
 class NTerm(Symbol):
+    def __init__(self, symbol, nullable=False):
+        self.symbol = symbol
+        self.nullable = nullable
+
     def __str__(self):
         return f"<{self.symbol}>"
 
@@ -52,48 +55,130 @@ def load_grammar(grammar_file="a.grammar"):
     all_symbols = []
     grammar = []
 
-    with open(grammar_file) as f:
-        raw_grammar, definitions = re.split(r"(?m)^[\s-]+[-]+[\s-]+$", f.read())
-        # augment syntax
-        raw_grammar = 'startsup :== start "$" {{startsup}}\n' + raw_grammar
-        definitions = definitions + '\n\ndef startsup(f):\n    return f()'
-        exec(definitions, namespace)
-        pat = r'(?s)(?P<NTerm>\w+)\s+:==\s*(?P<Body>.+?)[\s\n]*{{(?P<Def>.+?)}}'
-        prods = re.findall(pat, raw_grammar)
+    def strip_comments(code):
+        code = str(code)
+        return re.sub(r'(?m)^ *#.*\n?', '', code)
 
-        n_terminals = list(set([NTerm(p[0]) for p in prods]))
-        products = [p[1] for p in prods]
-        bodies = " ".join(products)
-        ele_pat = r'(["\'])(?P<Value>\S+)\1|(?P<Term>\S+)'
-        for mo in re.finditer(ele_pat, bodies):
+    def separate_productions(code):
+        parts = r'(?s)(?P<NTerm>\w+)\s*:==\s*(?P<Units>.+?}})'
+        tail  = r'\s*?(?:$|(?:\n\s*(?:(?=\w)|(?P<Epsilon>\|)\s*?\n)))'
+        pattern = parts + tail
+        productions = re.finditer(pattern, code)
+        return list(productions)
+
+    def get_none_terminals(production_list):
+        # nonlocal n_terminals
+        n_terms = []
+        for p in production_list:
+            nterm = NTerm(p['NTerm'], bool(p['Epsilon']))
+            if nterm not in n_terms:
+                n_terms.append(nterm)
+            else:
+                if nterm.nullable:
+                    n_terms[n_terms.index(nterm)] = nterm
+        return n_terms
+
+    def grammar_unit_iter(grammar_code):
+        # The order of spec is important,
+        # or it will mistake taking :== or | as Term
+        spec = [r"(?P<Produce>:==)",
+                r"(?P<Seperate>\|)",
+                r"(?P<Spaces>\s+)",
+                r"(?P<quote>[\"'])(?P<Value>\S+)(?P=quote)",
+                r"(?P<Term>\w+)",
+                r"(?P<Rule>{{\w+}})",
+                ]
+        pattern = "|".join(spec)
+        return re.finditer(pattern, grammar_code)
+
+    def get_terminals_values(grammar_code, n_terms):
+        term_values = []
+        terminals = []
+        for mo in grammar_unit_iter(grammar_code):
             kind = mo.lastgroup
             value = mo.group(kind)
-            if kind == 'Term':
-                if NTerm(value) not in n_terminals:
-                    if Term(value) not in terminals:
-                        terminals.append(Term(value))
-            else:  # kind == 'Value'
-                if Value(value) not in term_values:
-                    term_values.append(Value(value))
+            if kind == "Value":
+                v = Value(value)
+                if v not in term_values:
+                    term_values.append(v)
+            elif kind == "Term":
+                if NTerm(value) not in n_terms:
+                    v = Term(value)
+                    if v not in terminals:
+                        terminals.append(v)
+            else:
+                # ignore Produce Seperate Spaces and Rule
+                pass
+        return terminals, term_values
+
+    def get_production(prod_iter, n_terms, terms, values):
+        def get_n_term(value):
+            return n_terms[n_terms.index(NTerm(value))]
+        # P :== body {{rule}} | ...
+        head = prod_iter.group("NTerm")
+        units = prod_iter.group("Units")
+        # 1. separate production body by '|'
+        bodies = re.split(r"\|", units)
+        productions = []
+        for body in bodies:
+            # 2. separate formula and rule
+            rule = re.search(r'{{(\w+)}}', body).group(1)
+            formula = re.sub(r'\s*{{(\w+)}}', '', body)
+            # 3. get every symbol
+            spec = [r"(?P<Spaces>\s+)",
+                    r"(?P<quote>[\"'])(?P<Value>\S+)(?P=quote)",
+                    r"(?P<Term>\w+)"]
+            pattern = "|".join(spec)
+            form_list = []
+            for symbol in re.finditer(pattern, formula):
+                kind = symbol.lastgroup
+                value = symbol.group(kind)
+                if kind == "Value":
+                    form_list.append(Value(value))
+                elif kind == "Term":
+                    if NTerm(value) in n_terms:
+                        t = n_terms[n_terms.index(NTerm(value))]
+                        form_list.append(t)
+                    else:  # Terminal
+                        t = Term(value)
+                        form_list.append(t)
+                # others are omitted
+            production = Production(get_n_term(head),
+                                    tuple(form_list),
+                                    namespace[rule])
+            productions.append(production)
+        return productions
+
+    with open(grammar_file) as f:
+        # 1. seperate file by  ----------------- seperate line
+        raw_grammar, definitions = re.split(r"(?m)^[\s-]+[-]+[\s-]+$", f.read())
+
+        # 2. augment syntax
+        aug_grammar = 'startsup :== start "$" {{startsup}}\n' + raw_grammar
+        aug_definitions = definitions + '\n\ndef startsup(f):\n    return f()'
+
+        # 3. get definition funcs into global namespace
+        exec(aug_definitions, namespace)
+
+        # 4. strip comments
+        clean_grammar = strip_comments(aug_grammar)
+
+        # 5. get none terminals list
+        prods = separate_productions(clean_grammar)
+        n_terminals = get_none_terminals(prods)
+
+        # 6. get terminals and terminal values list. And all symbols list
+        terminals, term_values = get_terminals_values(clean_grammar, n_terminals)
+
         all_symbols =  term_values + terminals + n_terminals
 
-        def seperate_body_symbols(body):
-            body_tuple = tuple(re.split(r'[\n\s]+', body))
-
-            def symbolic(n):
-                if NTerm(n) in n_terminals:
-                    return NTerm(n)
-                elif Term(n) in terminals:
-                    return Term(n)
-                else:
-                    return Value(n[1:-1])
-            return tuple(map(symbolic, body_tuple))
+        # 7. generate grammar list, contains production rules.
+        #    Has to deal or productions and nullable productions.
 
         for prod in prods:
-            body_string = prod[1]
-            body = seperate_body_symbols(body_string)
-            production = Production(NTerm(prod[0]), body, namespace[prod[2]])
-            grammar.append(production)
+            p_list = get_production(prod, n_terminals, terminals, term_values)
+            grammar.extend(p_list)
+
         return grammar, terminals, n_terminals, term_values, all_symbols
 
 
@@ -386,8 +471,6 @@ class SDT:
         elif action[0] == '$':
             self.translation = grammar[0].rule(self.arg_stack[-1])
             self.accept = True   # success
-            # print('SUCCESS')
-            # print(self.translation)
         # reduce action reduct a production and push
         elif action[0] == 'r':
             # get the production in grammar
@@ -424,7 +507,7 @@ class SDT:
                 # patch "$" in the end of token stream
                 # to match the augmented grammar
                 self.ahead(Token("$", "$", 0, 0))
-                break
+                return self.translation
 
     def push_arg(self, token):
         if token.typ == 'C':
@@ -432,7 +515,7 @@ class SDT:
         elif token.typ == 'S1':
             token.code = lambda : 'S1code'
         elif token.typ == 'stmts':
-            token.code = lambda : 'S2code'
+            token.code = lambda : 'stmtscode'
         self.arg_stack.append(token)
 
 
@@ -442,8 +525,9 @@ class SDT:
 if __name__ == "__main__":
     from tokenizer import tokenizer
 
-    g = closure_groups()
-    _state_map = get_states_map(g)
+    #g = closure_groups()
+    #_state_map = get_states_map(g)
+    _state_map = generate_syntax_table()
     args = ''.join(list(map(lambda x: '{:'+str(max(5, len(x.__str__())+2))+'s}',
                             all_symbols)))
     s = "{:10s}" + args

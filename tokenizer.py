@@ -19,6 +19,10 @@ class Token:
         self.line = line
         self.column = column
 
+    def __str__(self):
+        l,m,n,o = [self.typ, self.value, self.line, self.column]
+        return f'<Token: typ({l}) value({m}) {n}:{o}>'
+
 
 def load_lex(lex_file='a.lexeme'):
 
@@ -33,12 +37,12 @@ def load_lex(lex_file='a.lexeme'):
         line = [strip_comments(i) for i in f.read().splitlines()
                 if strip_comments(i)]
         # print(line)
-        tokens = list(map(lambda x: eval_spec(re.split("\s*:=\s*", x)), line))
+        tokens = list(map(lambda x: eval_spec(re.split(r"\s*:=\s*", x)), line))
         return tokens
 
 
 def tokenizer(code, token_specification=load_lex('a.lexeme')):
-    tok_regex = '|'.join('(?P<%s>%s)' % pair for
+    tok_regex = '|'.join(r'(?P<%s>%s)' % pair for
                          pair in token_specification)
     line_num = 1
     line_start = 0

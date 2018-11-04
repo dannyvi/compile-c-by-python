@@ -4,12 +4,16 @@ stmts      :== stmt                                 {{stmts2}}
 stmt       :== "if" "(" "C" ")"
                "S1" "else"
                 "stmts"
-                                           {{stmt1}}
-stmt       :== declare                              {{stmt2}}
+                                           {{stmt1}} | "if" "("
+                                           "C" ")" "S1" {{stmt2}}
+stmt       :== declare                              {{stmt3}}
 declare    :== type ID ";"                          {{declare}}
 type       :== base                                 {{type1}}
+# type       :== base composit                        {{type2}}
 base       :== "int"                                {{base1}}
 base       :== "float"                              {{base2}}
+# composit   :== "[" NUMBER "]"                       {{composit1}}
+# composit   :== "[" NUMBER "]"  composit             {{composit2}}
 
 -------------------------------------------------------
 
@@ -70,7 +74,20 @@ def stmt1(IF, LPAR, c, RPAR, s1, ELSE, s2):
         return inter_code
     return callback
 
-def stmt2(declare_cb):
+def stmt2(IF, LPAR, c, RPAR, s1):
+    def callback(inh):
+        L1 = get_label()
+        C_code = c.code(f_cond=L1)
+        S1_code = s1.code()
+        inter_code = """\
+        {}
+        {}
+        goto {}
+        label {}""".format(C_code, S1_code, inh.next_label, L1 )
+        return inter_code
+    return callback
+
+def stmt3(declare_cb):
     def callback(inh):
         return declare_cb()
     return callback
