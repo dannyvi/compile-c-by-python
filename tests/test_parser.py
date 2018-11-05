@@ -1,5 +1,6 @@
-from parser import *
-from tokenizer import tokenizer
+from compire.parser import *
+from compire.tokenizer import tokenizer
+
 
 def test_start():
     deps = '-' * 50

@@ -10,8 +10,12 @@ Could parse:
 
 import re
 import collections
+import os
 
-# Token = collections.namedtuple('Token', ['typ', 'value', 'line', 'column'])
+
+lex_filename = os.path.dirname(os.path.abspath(__file__)) + '/gram/a.lexeme'
+
+
 class Token:
     def __init__(self, typ, value, line, column):
         self.typ = typ
@@ -21,10 +25,13 @@ class Token:
 
     def __str__(self):
         l,m,n,o = [self.typ, self.value, self.line, self.column]
-        return f'<Token: typ({l}) value({m}) {n}:{o}>'
+        return f'<Token: {l} {m} {n}:{o}>'
+
+    def __repr__(self):
+        return self.__str__()
 
 
-def load_lex(lex_file='a.lexeme'):
+def load_lex(lex_file=lex_filename):
 
     def strip_comments(code):
         code = str(code)
@@ -41,7 +48,7 @@ def load_lex(lex_file='a.lexeme'):
         return tokens
 
 
-def tokenizer(code, token_specification=load_lex('a.lexeme')):
+def tokenizer(code, token_specification=load_lex(lex_filename)):
     tok_regex = '|'.join(r'(?P<%s>%s)' % pair for
                          pair in token_specification)
     line_num = 1

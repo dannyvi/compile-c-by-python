@@ -1,0 +1,61 @@
+start       :== stmt                                {{start}}
+stmt        :== declare                             {{stmt}}
+declare     :== type ID ";"                         {{declare}}
+type        :== base component                      {{type}}
+base        :== "int" {{base}}
+                    | "float"                     {{base}}
+component   :== "[" NUMBER "]" {{component}}
+
+-----------------------------
+
+import collections
+
+all_labels = []
+
+symbol_table = {}
+
+Symbol = collections.namedtuple("Symbol", ["name", "type", "width"])
+
+class Prop:
+    pass
+
+
+def start(stmt_cb):
+    def callback():
+        return stmt_cb()
+    return callback
+
+
+def stmt(declare_cb):
+    def callback():
+        return declare_cb()
+    return callback
+
+
+def declare(_type, _id, end):
+    def callback():
+        symbol = Symbol(_id.value, _type.name, _type.width)
+        symbol_table[_id.value] = symbol
+        return ''
+    return callback
+
+
+def type(base, component):
+    syn = Prop()
+    syn.name = base.name
+    syn.width = base.width * component.num
+    return syn
+
+def base(token):
+    syn = Prop()
+    syn.name = token.value
+    syn.width = 4
+    return syn
+
+def component(LPAR, number, RPAR ):
+    num = int(number.value)
+    #if component:
+    #    num *= component.num
+    syn = Prop()
+    syn.num = num
+    return syn
