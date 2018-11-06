@@ -1,4 +1,4 @@
-from compire.tokenizer import Token, load_lex, tokenizer
+from compire.lexer import Token, load_lex, tokenizer
 
 
 def test_start():

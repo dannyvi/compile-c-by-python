@@ -1,7 +1,7 @@
-
 import re
 
-from .types import Production, NTerm, Term, Value
+from .atoms import Production, NTerm, Term, Value
+
 
 def load_grammar(grammar_file):
 
@@ -114,7 +114,7 @@ def load_grammar(grammar_file):
         aug_grammar = 'startsup :== start "$" {{startsup}}\n' + raw_grammar
         aug_definitions = definitions + '\n\ndef startsup(f):\n    return f()'
 
-        # 3. get definition funcs into global namespace
+        # 3. get definition funcs into namespace
         exec(aug_definitions, namespace)
 
         # 4. strip comments
@@ -136,6 +136,6 @@ def load_grammar(grammar_file):
             p_list = get_production(prod, n_terminals, terminals, term_values)
             grammar.extend(p_list)
 
-        return grammar, all_symbols
+        return grammar, all_symbols, namespace
 
 

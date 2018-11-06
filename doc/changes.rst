@@ -1,6 +1,20 @@
 CHANGES
 ========
 
+parser 初始化 的几种选择
+---------------------------------
+#. 加载一个tokenizer::
+
+    def __init__(gramfile, lexfile):
+        self.grammar, self.symbols, self.namespace = load_grammar(gramfile)
+        self.syn_table = gen_syntax_table(self.grammar, self.symbols)
+        self.tokenize = tokenize(file?, load_lex(lexfile))
+
+   Lexer 必须要加载 ``lex_file`` 才能 ``tokenize(stream)``
+
+   同样， ``SDT`` 必须要加载 ``grammar_file`` 才能 ``parse``
+
+
 parser 拆分为几个组件
 ---------------------------------
 

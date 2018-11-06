@@ -1,6 +1,8 @@
 import queue
 from typing import Set
-from .types import NTerm, Term, Value, Null
+
+from .atoms import NTerm, Term, Value, Null
+
 
 class Item(object):
     """The Canonical LR(1) Item definition.
@@ -21,10 +23,10 @@ class Item(object):
         p = list(map(lambda x: x.__str__(), self.body))
         p.insert(self.pos, '◆')
         pr = ' '.join(p)
-        return "[{}]  {} -> {}".format(self.follow, self.head, pr)
+        return f"[{self.follow}]  {self.head} -> {pr}"
 
     def __repr__(self):
-        return "<Item:{} >\n".format(self.__str__())
+        return f"<Item:{self.__str__()} >\n"
 
     def __eq__(self, other):
         if isinstance(other, Item):
@@ -58,8 +60,8 @@ class Closure(object):
         return "\n".join([i.__str__() for i in self.sets])
 
     def __repr__(self):
-        return "<Closure>:{}\n{}\n</Closure>\n".format(self.label,
-                                                       self.__str__())
+        p = '-'*35+f'Closure:{self.label}'+'-'*35
+        return f"\n{p}\n{self.__str__()}\n{p}\n"
 
     def __eq__(self, other):
         return self.sets == other.sets
@@ -74,47 +76,34 @@ class Closure(object):
         return item in self.sets
 
 
-def is_nterm(symbol):
-    return isinstance(symbol, NTerm)
-
-
-def is_term(symbol):
-    return isinstance(symbol, Term) or isinstance(symbol, Value)
-
-
-def nullable(none_terminal):
-    try:
-        return none_terminal.nullable
-    except AttributeError:
-        return False
-
-
 def first(symbol, grammar):
     """Return the first terminal sets that may occur in the Symbol."""
     result = set()
-    if is_term(symbol):
+    if isinstance(symbol, (Term, Value)):
         return set([symbol])
-    elif is_nterm(symbol):
-        if nullable(symbol):
+    elif isinstance(symbol, NTerm):
+        if symbol.nullable:
             result = result.union([Null()])
-        for i in grammar:
-            if i.head == symbol:
-                epsilons = True
-                current = 0
-                while epsilons is True and current < len(i.body):
-                    if i.body[current] != symbol:
-                        result = result.union(first(i.body[current], grammar))
-                    if not nullable(i.body[current]):
-                        epsilons = False
-                    current += 1
+        r = map(lambda x: x if i.head == symbol else set(), grammar)
+        g = [x for x in grammar if x.head == symbol]
+        for i in g:
+            null, current = True, 0
+            while null and current < len(i.body):
+                sym = i.body[current]
+                if sym != symbol:
+                    result = result.union(first(sym, grammar))
+                if not isinstance(sym, NTerm) or not sym.nullable:
+                    null = False
+                current += 1
     return result
 
 
 def firsts(suffix, grammar):
+    """Return the first terminal sets that may occur in the Formula body."""
     if len(suffix) == 1:
         return first(suffix[0], grammar)
     else:
-        if not nullable(suffix[0]):
+        if isinstance(suffix[0], (Term, Value)) or suffix[0].nullable:
             return first(suffix[0], grammar)
         else:
             return first(suffix[0], grammar).union(firsts(suffix[1:], grammar))
@@ -125,32 +114,26 @@ def get_closure(cl, grammar, label):
 
     The implied Items are the productions of the None terminals after the
     current position, which put a dot on the head."""
-    def get_body_nterm(item):
-        pos, prod = (item.pos, item.body)
-        if pos < len(prod):
-            symbol = prod[pos]
-            if is_nterm(symbol):
-                return symbol
-        return None
-    item_set = set()
+    itemset = set()
     q = queue.Queue()
     for i in cl.sets:
-        item_set.add(i)
+        itemset.add(i)
         q.put(i)
     while not q.empty():
         item = q.get()
-        symbol = get_body_nterm(item)
+        p, b = item.pos, item.body
+        symbol = b[p] if p < len(b) and isinstance(b[p], NTerm) else None
         if symbol:
-            products = [i for i in grammar if i.head == symbol]
+            prods = [i for i in grammar if i.head == symbol]
             suffix = item.body[item.pos+1:] + tuple([item.follow])
-            termins = firsts(suffix, grammar)
-            for product in products:
-                for terminal in termins:
-                    new_item = Item(symbol, product.body, 0, terminal)
-                    if new_item not in item_set:
-                        item_set.add(new_item)
-                        q.put(new_item)
-    c = Closure(item_set, label)
+            terminals = firsts(suffix, grammar)
+            for d in prods:
+                for t in terminals:
+                    newitem = Item(symbol, d.body, 0, t)
+                    if newitem not in itemset:
+                        itemset.add(newitem)
+                        q.put(newitem)
+    c = Closure(itemset, label)
     return c
 
 
@@ -158,56 +141,47 @@ def goto(clos: Closure, token, grammar) -> Closure:
     """a closure that could get from the current closure by input a letter.
 
     :param clos: the current closure.
-    :param token: the input letter.
+    :param token: the input Symbol of NTerm, Term or Value.
+    :param grammar: list of Production.
     :return: Closure.
     """
-    item_set = set()
-    for item in clos.sets:
-        dot, prod = (item.pos, item.body)
-        if dot < len(prod) and prod[dot] == token and \
-                isinstance(prod[dot], type(token)):
-            new_item = Item(item.head,
-                            item.body,
-                            item.pos + 1,
-                            item.follow)
-            item_set.add(new_item)
-    c = Closure(item_set)
+    itemset = set()
+    for i in clos.sets:
+        p, b = (i.pos, i.body)
+        if p < len(b) and b[p] == token:
+            newitem = Item(i.head, i.body, i.pos + 1, i.follow)
+            itemset.add(newitem)
+    c = Closure(itemset)
     return get_closure(c, grammar, label=None)
 
 
-def closure_groups(grammar, all_symbols):
-    def find_label(closure, group):
-        for i in group:
-            if closure == i:
-                return i.label
-        return None
-    group = set()
+def closure_collection(grammar, symbols):
+    collection = set()
     label = 0
-    start_item = Item(NTerm('startsup'), (NTerm('start'),), 0, Value('$'))
-    start = get_closure(Closure({start_item}), grammar, label)
+    firstitem = Item(NTerm('startsup'), (NTerm('start'),), 0, Value('$'))
+    start = get_closure(Closure({firstitem}), grammar, label)
     q = queue.Queue()
     q.put(start)
-    group.add(start)
+    collection.add(start)
     while not q.empty():
         c = q.get()
-        for literal in all_symbols: # terminals + n_terminals:
-            go_clos = goto(c, literal, grammar)
-            if go_clos:
-                if go_clos not in group:
+        for literal in symbols:
+            goclos = goto(c, literal, grammar)
+            if goclos:
+                if goclos not in collection:
                     label += 1
-                    go_clos.label = label
-                    q.put(go_clos)
-                    group.add(go_clos)
+                    goclos.label = label
+                    q.put(goclos)
+                    collection.add(goclos)
                     c.goto[literal] = label
-                    # print('add closure', go_clos)
                 else:
-                    go_label = find_label(go_clos, group)
-                    if go_label:
-                        c.goto[literal] = go_label
-    return group
+                    golabl = [i.label for i in collection if i == goclos]
+                    if golabl:
+                        c.goto[literal] = golabl[0]
+    return collection
 
 
-def get_states_map(closure_group, grammar, all_symbols):
+def get_states_map(collection, grammar, symbols):
 
     def get_prod_number(symbol, body):
         for num, prod in enumerate(grammar):
@@ -216,45 +190,40 @@ def get_states_map(closure_group, grammar, all_symbols):
 
     def get_state_map(closure):
         """ table row like all_symbols list state maps."""
-        row = ["." for i in all_symbols]
-        # None terminals GOTO action and Terminals shift action.
-        for input, goto_label in closure.goto.items():
-            row_pos = all_symbols.index(input)
+        row = ["." for i in symbols]
+        for sym, labl in closure.goto.items():     # NTerm GOTO & Term shift act
+            posit = symbols.index(sym)
             for item in closure:
-                if item.pos < len(item.body):      # shape like [A -> ⍺.aβ b]
-                    if item.body[item.pos] == input:
-                        # None terminals GOTO state
-                        if is_nterm(input):
-                            row[row_pos] = str(goto_label)
-                        # Terminals action shift state
-                        elif is_term(input):
-                            row[row_pos] = "s" + str(goto_label)
-        # Terminals reduce action. shape like  [A -> ⍺.  a]
-        for row_pos, input in enumerate(all_symbols):
+                # shape like [A -> ⍺.aβ b]
+                if item.pos < len(item.body) and item.body[item.pos] == sym:
+                    if isinstance(sym, NTerm):            # Nterm GOTO state
+                        row[posit] = str(labl)
+                    elif isinstance(sym, (Term, Value)):  # Term shift act
+                        row[posit] = "s" + str(labl)
+
+        for posit, sym in enumerate(symbols):   # Term reduce act [A -> ⍺.  a]
             for item in closure:
                 if item.pos == len(item.body) and \
-                        item.follow == input and \
+                        item.follow == sym and \
                         item.head.symbol != 'startsup':
                     p_num = get_prod_number(item.head, item.body)
-                    # grammar.index(Production(item.symbol, item.body))
-                    row[row_pos] = 'r' + str(p_num)
+                    row[posit] = 'r' + str(p_num)
         # accept condition 'startsup -> start. , $'
-        acc_item = Item(NTerm('startsup'), (NTerm('start'),), 1, Value('$'))
-        if acc_item in closure:
-            input = Value('$')
-            row_pos = all_symbols.index(Value('$'))
-            row[row_pos] = '$'
+        accitem = Item(NTerm('startsup'), (NTerm('start'),), 1, Value('$'))
+        if accitem in closure:
+            posit = symbols.index(Value('$'))
+            row[posit] = '$'
         return row
 
-    state_map = [None for i in range(len(closure_group))]
-    for closure in closure_group:
-        row = get_state_map(closure)
-        state_map[closure.label] = row
-    return state_map
+    states = [None for i in range(len(collection))]
+    for clos in collection:
+        currow = get_state_map(clos)
+        states[clos.label] = currow
+    return states
 
 
-def gen_syntax_table(grammar, all_symbols):
-    g = closure_groups(grammar, all_symbols)
-    state_map = get_states_map(g, grammar, all_symbols)
-    return state_map
+def gen_syntax_table(grammar, symbols):
+    g = closure_collection(grammar, symbols)
+    states = get_states_map(g, grammar, symbols)
+    return states
 

@@ -1,7 +1,7 @@
-from .types import Term, Value
+from compire.lexer import Token
+from .atoms import Term, Value
 from .loader import load_grammar
 from .table import gen_syntax_table
-from compire.tokenizer import Token
 
 
 class SDT:
@@ -13,6 +13,7 @@ class SDT:
         self.arg_stack = []
         self.accept = False
         self.translation = ''
+        self.env = {}
 
     def clear(self):
         self.state_stack = [0]
@@ -21,7 +22,7 @@ class SDT:
         self.translation = ''
 
     def load_grammar(self, gram_filename):
-        self.grammar, self.symbols = load_grammar(gram_filename)
+        self.grammar, self.symbols, self.env = load_grammar(gram_filename)
         self.syn_table = gen_syntax_table(self.grammar, self.symbols)
 
     @classmethod
@@ -86,7 +87,10 @@ class SDT:
                 # patch "$" in the end of token stream
                 # to match the augmented grammar
                 self.ahead(Token("$", "$", 0, 0))
-                return self.translation
+                if self.accept:
+                    translation = self.translation
+                    self.clear()
+                    return translation, self.env
 
     def push_arg(self, token):
         if token.typ == 'C':

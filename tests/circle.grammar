@@ -1,0 +1,61 @@
+start       :== stmts                                {{start}}
+stmts       :== stmts stmt                           {{stmts1}}
+stmts       :== stmt                                 {{stmts2}}
+stmt        :== c b c b                              {{stmt}}
+c           :== d e d                                {{c1}}
+c           :== "c"                                  {{c2}}
+b           :== "b"                                  {{b}}
+d           :== "d"                                  {{d}}
+e           :== "e"                                  {{e}}
+
+-----------------------------
+
+import collections
+
+all_labels = []
+
+symbol_table = {}
+
+Symbol = collections.namedtuple("Symbol", ["name", "type", "width"])
+
+class Prop:
+    pass
+
+
+def start(stmts_cb):
+    def callback():
+        return stmts_cb()
+    return callback
+
+def stmts1(sts, st):
+    def callback():
+        pass
+    return callback
+
+def stmts2(st):
+    def callback():
+        pass
+    return callback
+
+def stmt(a, b, c, d):
+    def callback():
+        return None
+    return callback
+
+def c1(d, e, f):
+    def callback():
+        pass
+    return callback
+
+def c2(a):
+    pass
+
+def d(a):
+    pass
+
+def e(a):
+    pass
+
+def b(a):
+    pass
+

@@ -2,12 +2,13 @@ from compire.parse.loader import load_grammar
 from compire.parse.table import closure_collection, gen_syntax_table
 from compire.parse.sdt import SDT
 from compire.lexer import Lexer
-from compire.parser import Parser
 import os
 
+lexer = Lexer()
 
-gram_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             'nullable.grammar')
+gram_filename = os.path.dirname(
+    os.path.dirname(
+        os.path.abspath(__file__))) + '/compire/gram/a.grammar'
 
 
 def test_start():
@@ -18,7 +19,7 @@ def test_start():
 def test_productions():
     print("test productions\n\n")
     a = load_grammar(gram_filename)
-    grammar, all_symbols, env = a
+    grammar, all_symbols = a
     for i in grammar:
         body = ('{} '*len(i.body)).format(*i.body)
         print(f"{i.head} -> {body}  ---{i.rule.__name__}---")
@@ -29,7 +30,7 @@ def test_productions():
 def test_grammars():
     print("\n")
     a = load_grammar(gram_filename)
-    grammar, all_symbols, env = a
+    grammar, all_symbols = a
     _state_map = gen_syntax_table(grammar, all_symbols)
     args = ''.join(list(map(lambda x: '{:'+str(max(5, len(x.__str__())+2))+'s}',
                             all_symbols)))
@@ -41,9 +42,19 @@ def test_grammars():
         print(s.format(*_state))
 
 
-def test_reduction():
+def test_if_else():
     print("\n")
+    token_stream = lexer.tokenize('if (C) S1 else stmts')
+    sdt = SDT.from_gram(gram_filename)
+    sdt.parse(token_stream)
+    print(sdt.translation)
+    assert sdt.translation
 
-    parser = Parser(gramfp=gram_filename)
-    translation, env = parser.parse_stream('int[5] a;')
-    print(env['symbol_table'])
+
+def test_declaration():
+    print("\n")
+    token_stream = lexer.tokenize('int a; int b; float c;')
+    sdt = SDT.from_gram(gram_filename)
+    sdt.parse(token_stream)
+    #print(namespace['symbol_table'])
+    #assert namespace['symbol_table']

@@ -25,12 +25,12 @@ class NTerm(Symbol):
         self.nullable = nullable
 
     def __str__(self):
-        return f"<{self.symbol}>"
+        return f"⋮{self.symbol}⋮"
 
 
 class Term(Symbol):
     def __str__(self):
-        return f"[{self.symbol}]"
+        return f"∶{self.symbol}∶"
 
 
 class Value(Symbol):

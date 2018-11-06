@@ -31,7 +31,7 @@ _______________________
 
 1. 文件名后缀 .lexeme。
 2. lexer读取解析文件并生成tokenizer。
-3. tokenizer 可以解析源文件为词法单元。
+3. tokenize 可以解析源文件为词法单元。
 4. 解析文件格式:
 
   * token_name := pattern
