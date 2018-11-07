@@ -16,11 +16,11 @@ def test_if_else():
     print("\n")
     parser = Parser()
     translation = parser.parse_stream('if (C) S1 else stmts')
-    print(translation)
+    print(translation[0])
 
 
 def test_declaration():
     print("\n")
     parser = Parser()
     translation = parser.parse_stream('int a; int b; float c;')
-    print(translation)
+    print(translation[0])

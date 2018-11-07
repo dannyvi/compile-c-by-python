@@ -1,4 +1,4 @@
-from compire.lexer import Token, load_lex, tokenizer
+from compire.lexer import Token, load_lex, Lexer
 
 
 def test_start():
@@ -11,10 +11,11 @@ def test_Token():
 
 
 def test_load_lex():
-    f = load_lex()
+    f = load_lex("compire/gram/a.lexeme")
     print(f)
 
 
 def test_tokenizer():
-    token_stream = list(tokenizer('if (C) S1 else stmts'))
+    lexer = Lexer()
+    token_stream = list(lexer.tokenize('if (C) S1 else stmts'))
     print(token_stream)

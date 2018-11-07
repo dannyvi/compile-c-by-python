@@ -76,7 +76,11 @@ class SDT:
             # only when shifting, a token was consume and passed
             self.ahead(token)
         else:
-            raise SyntaxError(f"Not a correct token '{token.__str__()}'.")
+            stk = f"state: {self.state_stack[-1]}\n"
+            tk = f"token: {token.__str__()}\n"
+            act = f"action: {action}\n"
+            msg = f"{stk}{tk}{act}"
+            raise SyntaxError(f"\nError: {msg}")
 
     def parse(self, token_stream):
         while True:

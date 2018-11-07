@@ -1,4 +1,4 @@
-from compire.parse.loader import load_grammar
+from compire.parse.loader import load_grammar, eliminate_null_production
 from compire.parse.table import closure_collection, gen_syntax_table
 from compire.parse.sdt import SDT
 from compire.lexer import Lexer
@@ -22,8 +22,12 @@ def test_productions():
     for i in grammar:
         body = ('{} '*len(i.body)).format(*i.body)
         print(f"{i.head} -> {body}  ---{i.rule.__name__}---")
-    g = closure_collection(grammar, all_symbols)
-    print(g)
+    new_g = eliminate_null_production(grammar)
+    print("\nNew grammar\n")
+    for i in new_g:
+        print(i)
+    #g = closure_collection(grammar, all_symbols)
+    #print(g)
 
 
 def test_grammars():
@@ -43,7 +47,10 @@ def test_grammars():
 
 def test_reduction():
     print("\n")
-
     parser = Parser(gramfp=gram_filename)
+    t = parser.tokenize("int[5] a;")
+    print(list(t))
+    translation, env = parser.parse_stream('int[5] a;')
+    print(env['symbol_table'])
     translation, env = parser.parse_stream('int[5] a;')
     print(env['symbol_table'])

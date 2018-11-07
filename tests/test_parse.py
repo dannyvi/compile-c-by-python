@@ -13,13 +13,13 @@ gram_filename = os.path.dirname(
 
 def test_start():
     deps = '-' * 50
-    print("\n{}Nullable declarations{}".format(deps, deps))
+    print("\n{}Parse{}".format(deps, deps))
 
 
 def test_productions():
     print("test productions\n\n")
     a = load_grammar(gram_filename)
-    grammar, all_symbols = a
+    grammar, all_symbols, env = a
     for i in grammar:
         body = ('{} '*len(i.body)).format(*i.body)
         print(f"{i.head} -> {body}  ---{i.rule.__name__}---")
@@ -30,7 +30,7 @@ def test_productions():
 def test_grammars():
     print("\n")
     a = load_grammar(gram_filename)
-    grammar, all_symbols = a
+    grammar, all_symbols, env = a
     _state_map = gen_syntax_table(grammar, all_symbols)
     args = ''.join(list(map(lambda x: '{:'+str(max(5, len(x.__str__())+2))+'s}',
                             all_symbols)))
@@ -48,7 +48,6 @@ def test_if_else():
     sdt = SDT.from_gram(gram_filename)
     sdt.parse(token_stream)
     print(sdt.translation)
-    assert sdt.translation
 
 
 def test_declaration():
