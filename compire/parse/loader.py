@@ -1,3 +1,23 @@
+"""Loader do the preceding part of constructing a parser(syntax analyzer).
+
+It read rules from a .grammar definition file, and execute a analyze procedure.
+
+The procedure of loading is below:
+
+1.  seperate file by  --------------- seperate line into **definitions** and
+    **rules** part.
+2.  augment syntax by adding ``startsup -> start "$"`` with an "$" as the end.
+3.  get definition funcs in the **rule** part into namespace env.
+4.  strip comments from the **definitions** part.
+5.  separate the productions from **definition**.
+6.  get none terminals by reading the head of the productions.
+7.  get terminals and values by reading from the right part of the productions.
+8.  generate grammar list.
+9.  eliminating null productions.
+
+The main function is ``load_grammar`` and it
+returns a ``grammar list``, a ``symbol list``, and an ``env``.
+"""
 
 import re
 from functools import reduce
@@ -48,15 +68,8 @@ def strip_comments(stream):
     return code
 
 
-def separate_productions(code):
-    c = re.sub(r"(?m)^(\w+)(\s*?)(:==)", r"\3\2\1", code)
-    c_split = [i for i in re.split(":==", c) if i]
-    return c_split
-
-
 def get_none_terminals(prod_str_list):
     n_terms = []
-    #spec = r"(?s)^\s*(?P<Head>\w+).*?(?P<Nullable>(?:\|\s*|\|\s*{{.*}}\s*)?$)"
     spec = re.compile(r"""(?s)^\s*?(?P<Head>\w+)     # head Nterm
                           .*?                  # any character
                           (?P<Nullable>(?:\|\s*|\|\s*{{.*}}\s*)?$)""", re.X)
@@ -71,42 +84,20 @@ def get_none_terminals(prod_str_list):
     return n_terms
 
 
-#def get_terminals_values(grammar_code, n_terms):
-#    term_values = []
-#    terminals = []
-#    codes = []
-#    spec = [r"(?P<Produce>:==)",
-#            r"(?P<Seperate>\|)",
-#            r"(?P<Spaces>\s+)",
-#            r"(?P<quote>[\"'])(?P<Value>\S+)(?P=quote)",
-#            r"(?P<Term>\w+)",
-#            r"{{(?P<Code>\w+)}}",
-#            ]
-#    pattern = "|".join(spec)
-#    for mo in re.finditer(pattern, grammar_code):
-#        kind = mo.lastgroup
-#        value = mo.group(kind)
-#        if kind == "Value":
-#            v = Value(value)
-#            if v not in term_values:
-#                term_values.append(v)
-#        elif kind == "Term":
-#            if NTerm(value) not in n_terms:
-#                v = Term(value)
-#                if v not in terminals:
-#                    terminals.append(v)
-#        elif kind == "Code":
-#            sym = "Cd" + str(len(codes))
-#            v = Code(sym, value)
-#            if v not in codes:
-#                codes.append(v)
-#        else:
-#            # ignore Produce Seperate Spaces and Rule
-#            pass
-#    return terminals, term_values, codes
-
-
 def decompose_prod(prod, n_terms, values, terms, codes):
+    """Decompose productions and return productions, terms, values and codes.
+
+    Incrementally add productions, values, terms, and codes that are discovered
+    in the prod parameter.
+
+    :param prod: production with '|' which combined multi prods with one head.
+    :param n_terms: a complete none terminal list
+    :param values: the values list already occurs in the prev part.
+    :param terms: the terms list already occurs in the prev part.
+    :param codes: the codes list already occurs in the prev part.
+    :return: a list of (productions, null_prods, values, terms, codes)
+    """
+
     p = r"(?s)^\s*?(\w+)\s*(.*)$"
     h_str, units = re.match(p, prod).groups()
     head = n_terms[n_terms.index(NTerm(h_str))]
@@ -191,18 +182,16 @@ def load_grammar(grammar_file):
         pure_grammar = strip_comments(aug_grammar)
 
         # 5. get productions with | operators.
-        prods = separate_productions(pure_grammar)
+        prefixed = re.sub(r"(?m)^(\w+)(\s*?)(:==)", r"\3\2\1", pure_grammar)
+        prods = [i for i in re.split(":==", prefixed) if i]
 
         # 6. get none terminals list
         n_terms = get_none_terminals(prods)
 
         # 7. get terminals and terminal values list. And all symbols list
-        #terms, values, codes = get_terminals_values(pure_grammar, n_terms)
-
-        #symbols = values + terms + n_terms + codes
+        values, terms, codes, null_prod_list = [], [], [], []
 
         # 8. generate grammar list, contains production rules.
-        values, terms, codes, null_prod_list = [], [], [], []
         for prod in prods:
             result = decompose_prod(prod, n_terms, values, terms, codes)
             p_list, n_list, values, terms, codes = result
