@@ -3,7 +3,6 @@ from compire.parse.loader import *
 code = """start       :== stmt                                {{start}}
 stmt        :== declare                             {{stmt}}
 declare     :== type ID ";"                         {{declare}} 
-                |
 type        :== base component                      {{type}}
 base        :== "int" {{base}}
                     | "float"                     {{base}} 
@@ -39,7 +38,7 @@ class TestClass:
         plist = separate_productions(code)
         n_terms = get_none_terminals(plist)
         print(n_terms)
-        terms, values = get_terminals_values(code, n_terms)
+        terms, values, codes = get_terminals_values(code, n_terms)
         print(terms)
         print(values)
 
@@ -49,7 +48,7 @@ class TestClass:
                "base": f, "component": f}
         gram = []
         for p in plist:
-            nl = get_single_production(p, n_terms, env)
+            nl = decompose_prod(p, n_terms)
             assert nl
             for i in nl:
                 gram.extend(nl)

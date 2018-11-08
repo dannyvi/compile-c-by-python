@@ -20,11 +20,13 @@ def test_productions():
     print("test productions\n\n")
     a = load_grammar(gram_filename)
     grammar, all_symbols, env = a
-    for i in grammar:
+    for n, i in enumerate(grammar):
         body = ('{} '*len(i.body)).format(*i.body)
-        print(f"{i.head} -> {body}  ---{i.rule.__name__}---")
+        print(f"{n} {i.head} -> {body}  ---{i.rule.__name__}---")
     g = closure_collection(grammar, all_symbols)
-    print(g)
+    for num in range(len(g)):
+        clos = [i for i in g if i.label == num][0]
+        print(clos.__repr__())
 
 
 def test_grammars():
@@ -32,9 +34,9 @@ def test_grammars():
     a = load_grammar(gram_filename)
     grammar, all_symbols, env = a
     _state_map = gen_syntax_table(grammar, all_symbols)
-    args = ''.join(list(map(lambda x: '{:'+str(max(5, len(x.__str__())+2))+'s}',
+    args = ''.join(list(map(lambda x: '{:'+str(max(4, len(x.__str__())+0))+'s}',
                             all_symbols)))
-    s = "{:10s}" + args
+    s = "{:6s}" + args
     head = ['state', ] + list(all_symbols)
     print(s.format(*head))
     for j, i in enumerate(_state_map):

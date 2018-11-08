@@ -4,7 +4,8 @@ stmts      :== stmt                                 {{stmts2}}
 stmt       :== "if" "(" "C" ")"
                "S1" "else"
                 "stmts"
-                                           {{stmt1}} | "if" "("
+                                           {{stmt1}}
+                                           | "if" "("
                                            "C" ")" "S1" {{stmt2}}
 stmt       :== declare                              {{stmt3}}
 declare    :== type ID ";"                          {{declare}}

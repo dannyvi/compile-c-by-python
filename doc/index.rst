@@ -11,6 +11,7 @@ Welcome to compiie's documentation!
 
    record
    changes
+   ref/index
 
 example::
 

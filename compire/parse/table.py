@@ -23,7 +23,7 @@ class Item(object):
         p = list(map(lambda x: x.__str__(), self.body))
         p.insert(self.pos, '◆')
         pr = ' '.join(p)
-        return f"[{self.follow}]  {self.head} -> {pr}"
+        return f"{self.head} -> {pr} ⋯ {self.follow}"
 
     def __repr__(self):
         return f"<Item:{self.__str__()} >\n"
@@ -84,16 +84,17 @@ def first(symbol, grammar):
     elif isinstance(symbol, NTerm):
         if symbol.nullable:
             result = result.union([Null()])
-        r = map(lambda x: x if i.head == symbol else set(), grammar)
         g = [x for x in grammar if x.head == symbol]
         for i in g:
-            null, current = True, 0
-            while null and current < len(i.body):
+            nullable, current = True, 0
+            while nullable and current < len(i.body):
                 sym = i.body[current]
                 if sym != symbol:
                     result = result.union(first(sym, grammar))
-                if not isinstance(sym, NTerm) or not sym.nullable:
-                    null = False
+                if not isinstance(sym, Null) or \
+                        not isinstance(sym, NTerm) or\
+                        not sym.nullable:
+                    nullable = False
                 current += 1
     return result
 
@@ -103,7 +104,7 @@ def firsts(suffix, grammar):
     if len(suffix) == 1:
         return first(suffix[0], grammar)
     else:
-        if isinstance(suffix[0], (Term, Value)) or suffix[0].nullable:
+        if isinstance(suffix[0], (Term, Value)) or not suffix[0].nullable:
             return first(suffix[0], grammar)
         else:
             return first(suffix[0], grammar).union(firsts(suffix[1:], grammar))
@@ -198,7 +199,7 @@ def get_states_map(collection, grammar, symbols):
                 if item.pos < len(item.body) and item.body[item.pos] == sym:
                     if isinstance(sym, NTerm):            # Nterm GOTO state
                         row[posit] = str(labl)
-                    elif isinstance(sym, (Term, Value)):  # Term shift act
+                    elif isinstance(sym, (Term, Value, Null)):  # Term shift act
                         row[posit] = "s" + str(labl)
 
         for posit, sym in enumerate(symbols):   # Term reduce act [A -> ⍺.  a]
@@ -219,6 +220,13 @@ def get_states_map(collection, grammar, symbols):
     for clos in collection:
         currow = get_state_map(clos)
         states[clos.label] = currow
+    # deal null input
+    for row in states:
+        if row[0][0] == 's':
+            row_to_copy = states[int(row[0][1:])]
+            for num, i in enumerate(row_to_copy):
+                if isinstance(symbols[num], (Term, Value)) and i != '.':
+                    row[num] = i
     return states
 
 

@@ -1,6 +1,7 @@
 import collections
 import itertools
 
+# code_obj_list = []
 
 class Symbol:
     def __init__(self, symbol):
@@ -46,11 +47,23 @@ class Value(Symbol):
 
 
 class Null(Symbol):
-    def __init__(self, symbol=None):
+    def __init__(self, symbol="ε"):
         super(Null, self).__init__(symbol)
 
     def __str__(self):
         return f"ε"
+
+
+class Code(NTerm):
+    def __init__(self, symbol, code):
+        # n = len(code_obj_list)
+        # symbol = f"Cd{n}"
+        # code_obj_list.append(symbol)
+        super(Code, self).__init__(symbol, nullable=True)
+        self.code = code
+
+    def __str__(self):
+        return f"♮{self.symbol}♮"
 
 
 class Production:
@@ -76,13 +89,18 @@ class Production:
 
     def remove_null(self):
         body_full = map(lambda x: (NTerm(x.symbol), None) if
-                        isinstance(x, NTerm) and x.nullable else (x, ),
+                        isinstance(x, NTerm) and
+                        not isinstance(x, Code) and
+                        x.nullable else (x, ),
                         self.body)
         body = itertools.product(*body_full)
         productions = []
         for i in body:
             b = tuple(filter(None, i))
             if b:
-                p = Production(NTerm(self.head.symbol), b, self.rule)
+                if isinstance(self.head, Code):
+                    p = Production(self.head, b, self.rule)
+                else:
+                    p = Production(NTerm(self.head.symbol), b, self.rule)
                 productions.append(p)
         return productions

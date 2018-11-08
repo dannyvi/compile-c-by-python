@@ -1,7 +1,26 @@
+"""Loader do the preceding part of constructing a parser(syntax analyzer).
+
+It read rules from a .grammar definition file, and execute a analyze procedure.
+
+The procedure of loading is below:
+
+1.  seperate file by  --------------- seperate line into **definitions** and
+    **rules** part.
+2.  augment syntax by adding ``startsup -> start "$"`` with an "$" as the end.
+3.  get definition funcs in the **rule** part into namespace env.
+4.  strip comments from the **definitions** part.
+5.  separate the productions from **definition**.
+6.  get none terminals by reading the head of the productions.
+7.  get terminals and values by reading from the right part of the productions.
+8.  generate grammar list.
+9.  eliminating null productions.
+
+Return a ``grammar list``, a ``symbol list``, and an ``env``.
+"""
 
 import re
 from functools import reduce
-from .atoms import Production, NTerm, Term, Value, Code, Null
+from .atoms import Production, NTerm, Term, Value
 
 
 def strip_comments(stream):
@@ -49,20 +68,20 @@ def strip_comments(stream):
 
 
 def separate_productions(code):
+    # parts = r'(?s)(?P<NTerm>\w+)\s*:==\s*(?P<Units>.+?}})'
+    # tail = r'\s*?(?:$|(?:\n\s*(?:(?=\w)|(?P<Epsilon>\|)\s*?\n)))'
+    # pattern = parts + tail
+    # productions = re.finditer(pattern, code)
+    # return list(productions)
     c = re.sub(r"(?m)^(\w+)(\s*?)(:==)", r"\3\2\1", code)
     c_split = [i for i in re.split(":==", c) if i]
     return c_split
 
 
-def get_none_terminals(prod_str_list):
+def get_none_terminals(production_list):
     n_terms = []
-    #spec = r"(?s)^\s*(?P<Head>\w+).*?(?P<Nullable>(?:\|\s*|\|\s*{{.*}}\s*)?$)"
-    spec = re.compile(r"""(?s)^\s*?(?P<Head>\w+)     # head Nterm
-                          .*?                  # any character
-                          (?P<Nullable>(?:\|\s*|\|\s*{{.*}}\s*)?$)""", re.X)
-    for p in prod_str_list:
-        res = re.match(spec, p).groups()
-        nterm = NTerm(res[0], bool(res[1]))
+    for p in production_list:
+        nterm = NTerm(p['NTerm'], bool(p['Epsilon']))
         if nterm not in n_terms:
             n_terms.append(nterm)
         else:
@@ -71,82 +90,78 @@ def get_none_terminals(prod_str_list):
     return n_terms
 
 
-#def get_terminals_values(grammar_code, n_terms):
-#    term_values = []
-#    terminals = []
-#    codes = []
-#    spec = [r"(?P<Produce>:==)",
-#            r"(?P<Seperate>\|)",
-#            r"(?P<Spaces>\s+)",
-#            r"(?P<quote>[\"'])(?P<Value>\S+)(?P=quote)",
-#            r"(?P<Term>\w+)",
-#            r"{{(?P<Code>\w+)}}",
-#            ]
-#    pattern = "|".join(spec)
-#    for mo in re.finditer(pattern, grammar_code):
-#        kind = mo.lastgroup
-#        value = mo.group(kind)
-#        if kind == "Value":
-#            v = Value(value)
-#            if v not in term_values:
-#                term_values.append(v)
-#        elif kind == "Term":
-#            if NTerm(value) not in n_terms:
-#                v = Term(value)
-#                if v not in terminals:
-#                    terminals.append(v)
-#        elif kind == "Code":
-#            sym = "Cd" + str(len(codes))
-#            v = Code(sym, value)
-#            if v not in codes:
-#                codes.append(v)
-#        else:
-#            # ignore Produce Seperate Spaces and Rule
-#            pass
-#    return terminals, term_values, codes
-
-
-def decompose_prod(prod, n_terms, values, terms, codes):
-    p = r"(?s)^\s*?(\w+)\s*(.*)$"
-    h_str, units = re.match(p, prod).groups()
-    head = n_terms[n_terms.index(NTerm(h_str))]
-    bodies = re.split(r"\|", units)
-    productions = []
-    null_prods = []
-    spec = [r"(?P<Spaces>\s+)",
+def grammar_unit_iter(grammar_code):
+    # The order of spec is important,
+    # or it will mistake taking :== or | as Term
+    spec = [r"(?P<Produce>:==)",
+            r"(?P<Seperate>\|)",
+            r"(?P<Spaces>\s+)",
             r"(?P<quote>[\"'])(?P<Value>\S+)(?P=quote)",
-            r"(?P<Term_NTerm>\w+)",
-            r"{{(?P<Code>\w+)}}",
+            r"(?P<Term>\w+)",
+            r"(?P<Rule>{{\w+}})",
             ]
     pattern = "|".join(spec)
+    return re.finditer(pattern, grammar_code)
+
+
+def get_terminals_values(grammar_code, n_terms):
+    term_values = []
+    terminals = []
+    for mo in grammar_unit_iter(grammar_code):
+        kind = mo.lastgroup
+        value = mo.group(kind)
+        if kind == "Value":
+            v = Value(value)
+            if v not in term_values:
+                term_values.append(v)
+        elif kind == "Term":
+            if NTerm(value) not in n_terms:
+                v = Term(value)
+                if v not in terminals:
+                    terminals.append(v)
+        else:
+            # ignore Produce Seperate Spaces and Rule
+            pass
+    return terminals, term_values
+
+
+def get_single_production(prod_iter, n_terms, env):
+    def get_n_term(value):
+        return n_terms[n_terms.index(NTerm(value))]
+    # P :== body {{rule}} | ...
+    head = prod_iter.group("NTerm")
+    units = prod_iter.group("Units")
+    # 1. separate production body by '|'
+    bodies = re.split(r"\|", units)
+    productions = []
     for body in bodies:
+        # 2. separate formula and rule
+        rule = re.search(r'{{(\w+)}}', body).group(1)
+        formstr = re.sub(r'\s*{{(\w+)}}', '', body)
+        # 3. get every symbol
+        spec = [r"(?P<Spaces>\s+)",
+                r"(?P<quote>[\"'])(?P<Value>\S+)(?P=quote)",
+                r"(?P<Term_NTerm>\w+)"]
+        pattern = "|".join(spec)
         formlist = []
-        for symbol in re.finditer(pattern, body):
+        for symbol in re.finditer(pattern, formstr):
             kind = symbol.lastgroup
             value = symbol.group(kind)
             if kind == "Value":
-                v = Value(value)
-                formlist.append(v)
-                if v not in values:
-                    values.append(v)
+                formlist.append(Value(value))
             elif kind == "Term_NTerm":
                 if NTerm(value) in n_terms:
                     t = n_terms[n_terms.index(NTerm(value))]
                     formlist.append(t)
-                else:
+                else:  # Terminal
                     t = Term(value)
                     formlist.append(t)
-                    if t not in terms:
-                        terms.append(t)
-            elif kind == "Code":
-                t = Code(f"CD{str(len(codes))}", value)
-                formlist.append(t)
-                codes.append(t)
-                nullprod = Production(t, (Null(),), lambda: None)
-                null_prods.append(nullprod)
-        production = Production(head, tuple(formlist), lambda: None)
+            # others are omitted
+        production = Production(get_n_term(head),
+                                tuple(formlist),
+                                env[rule])
         productions.append(production)
-    return productions, null_prods, values, terms, codes
+    return productions
 
 
 def eliminate_null_production(grammar):
@@ -181,7 +196,7 @@ def load_grammar(grammar_file):
         raw_grammar, definitions = re.split(r"(?m)^[\s-]+[-]+[\s-]+$", f.read())
 
         # 2. augment syntax
-        aug_grammar = 'startsup :== start "$" \n' + raw_grammar
+        aug_grammar = 'startsup :== start "$" {{startsup}}\n' + raw_grammar
         aug_definitions = definitions + '\n\ndef startsup(f):\n    return f()'
 
         # 3. get definition funcs into namespace
@@ -194,26 +209,21 @@ def load_grammar(grammar_file):
         prods = separate_productions(pure_grammar)
 
         # 6. get none terminals list
-        n_terms = get_none_terminals(prods)
+        n_terminals = get_none_terminals(prods)
 
         # 7. get terminals and terminal values list. And all symbols list
-        #terms, values, codes = get_terminals_values(pure_grammar, n_terms)
+        terminals, term_values = get_terminals_values(pure_grammar, n_terminals)
 
-        #symbols = values + terms + n_terms + codes
+        symbols = term_values + terminals + n_terminals
 
         # 8. generate grammar list, contains production rules.
-        values, terms, codes, null_prod_list = [], [], [], []
         for prod in prods:
-            result = decompose_prod(prod, n_terms, values, terms, codes)
-            p_list, n_list, values, terms, codes = result
-            null_prod_list.extend(n_list)
+            p_list = get_single_production(prod, n_terminals, env)
             grammar.extend(p_list)
-        grammar.extend(null_prod_list)
-
-        symbols = [Null()] + values + terms + n_terms + codes
 
         # 9. eliminate null productions.
         new_grammar = eliminate_null_production(grammar)
 
         return new_grammar, symbols, env
+
 

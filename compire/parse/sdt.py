@@ -1,5 +1,5 @@
 from compire.lexer import Token
-from .atoms import Term, Value
+from .atoms import Term, Value, Null
 from .loader import load_grammar
 from .table import gen_syntax_table
 
@@ -49,7 +49,7 @@ class SDT:
             self.state_stack.append(current_state)
             self.push_arg(token)
         elif action[0] == '$':
-            self.translation = self.grammar[0].rule(self.arg_stack[-1])
+            self.translation = self.grammar[0].rule()
             self.accept = True   # success
         # reduce action reduct a production and push
         elif action[0] == 'r':
@@ -58,18 +58,20 @@ class SDT:
             production = self.grammar[number]
             head, body, rule = production
             # pop the states of production body
-            for _ in body:
-                self.state_stack.pop()
+            args = []
+            if not (len(body) == 1 and body[0] == Null()):  # exclude null prod
+                for _ in body:
+                    self.state_stack.pop()
+                    arg = self.arg_stack.pop()
+                    args.insert(0, arg)
             # push the state of head GOTO(I,X)
             state = self.get_action(self.state_stack[-1], head)
             self.state_stack.append(int(state))
 
             # translations
-            args = []
-            for _ in body:
-                arg = self.arg_stack.pop()
-                args.insert(0, arg)
-            translation = rule(*args)
+            # for _ in body:
+
+            translation = rule()
             self.arg_stack.append(translation)
 
             # reduce actions does not consume a token,
