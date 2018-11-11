@@ -1,4 +1,5 @@
 from compire.parse.loader import *
+import os
 
 code = """start       :== stmt                                {{start}}
 stmt        :== declare                             {{stmt}}
@@ -10,7 +11,7 @@ component   :== "[" NUMBER "]" {{component}}
                  |        
 """
 
-with open('tests/code_with_comments.py') as c:
+with open('tests/code_with_comments') as c:
     # 1. seperate file by  ----------------- seperate line
     raw_grammar = c.read()
 
@@ -27,20 +28,14 @@ def test_strip_comments():
 
 class TestClass:
 
-    def test_separate_productions(self):
-        print('\n')
-        p = separate_productions(code)
-        for i in p:
-            print(i)
-
     def test_get_funcs(self):
         print('\n')
-        plist = separate_productions(code)
+        prefixed = re.sub(r"(?m)^(\w+)(\s*?)(:==)", r"\3\2\1", code)
+        plist = [i for i in re.split(":==", prefixed) if i]
+
         n_terms = get_none_terminals(plist)
         print(n_terms)
-        terms, values, codes = get_terminals_values(code, n_terms)
-        print(terms)
-        print(values)
+        terms, values, codes = [], [], []
 
         def f():
             pass
@@ -48,24 +43,27 @@ class TestClass:
                "base": f, "component": f}
         gram = []
         for p in plist:
-            nl = decompose_prod(p, n_terms)
+            nl = decompose_prod(p, n_terms, terms, values, codes)
             assert nl
             for i in nl:
                 gram.extend(nl)
                 print(i)
         print("\n Remove Null productions")
-        new_gram = eliminate_null_production(gram)
-        for i in new_gram:
-            print(i)
 
     def test_self_eliminate(self):
         def f():
             pass
         n = NTerm("comp", nullable=True)
-        prod = Production(n,
-                          (Value('['), Term('NUMBER'), Value(']'),n),
-                          f)
+        prod = Production.cons(n, (Value('['), Term('NUMBER'), Value(']'), n))
         group = eliminate_null_production([prod])
         print(group)
 
 
+def test_a_grammar():
+    gram_filename = os.path.dirname(
+        os.path.dirname(
+            os.path.abspath(__file__))) + '/compire/gram/a.grammar'
+    grammar, syms, env = load_grammar(gram_filename)
+    for i in grammar:
+        print(i)
+    print(syms)

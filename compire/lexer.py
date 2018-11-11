@@ -18,12 +18,12 @@ class Token:
     """The object which Lexer produces from reading a source file."""
     def __init__(self, typ, value, line, column):
         self.typ = typ
-        self.value = value
-        self.line = line
-        self.column = column
+        self.val = value
+        self.lin = line
+        self.col = column
 
     def __str__(self):
-        l, m, n, o = self.typ, self.value, self.line, self.column
+        l, m, n, o = self.typ, self.val, self.lin, self.col
         return f'<Token: {l} {m} {n}:{o}>'
 
     def __repr__(self):
@@ -71,7 +71,5 @@ class Lexer:
             elif kind == 'MISMATCH':
                 raise RuntimeError(f'{value!r} unexpected on line {line_num}')
             else:
-                if kind == 'NODE':
-                    kind = value
                 column = mo.start() - line_start
                 yield Token(kind, value, line_num, column)

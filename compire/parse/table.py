@@ -57,7 +57,8 @@ class Closure(object):
         return self.sets.__iter__()
 
     def __str__(self):
-        return "\n".join([i.__str__() for i in self.sets])
+        return "\n".join([f"{num:<2} {i.__str__()}" for
+                       num, i in enumerate(self.sets)])
 
     def __repr__(self):
         p = '-'*35+f'Closure:{self.label}'+'-'*35
@@ -226,7 +227,9 @@ def get_states_map(collection, grammar, symbols):
             row_to_copy = states[int(row[0][1:])]
             for num, i in enumerate(row_to_copy):
                 if isinstance(symbols[num], (Term, Value)) and i != '.':
-                    row[num] = i
+                    #row[num]=i
+                    if row[num] == '.':
+                        row[num] = i
     return states
 
 

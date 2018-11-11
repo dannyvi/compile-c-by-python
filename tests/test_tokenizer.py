@@ -17,5 +17,5 @@ def test_load_lex():
 
 def test_tokenizer():
     lexer = Lexer()
-    token_stream = list(lexer.tokenize('if (C) S1 else stmts'))
+    token_stream = list(lexer.tokenize('if ( 2 < 3 ) S1 else stmts'))
     print(token_stream)

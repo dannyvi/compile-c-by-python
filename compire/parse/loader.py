@@ -72,10 +72,11 @@ def get_none_terminals(prod_str_list):
     n_terms = []
     spec = re.compile(r"""(?s)^\s*?(?P<Head>\w+)     # head Nterm
                           .*?                  # any character
-                          (?P<Nullable>(?:\|\s*|\|\s*{{.*}}\s*)?$)""", re.X)
+                          (?:(?P<Multi>(?:\|\s*{{.*?}}.*?{{.*?}}\s*)$)|
+                          (?P<Nullable>(?:\|\s*|\|\s*{{.*?}}\s*)?$))""", re.X)
     for p in prod_str_list:
         res = re.match(spec, p).groups()
-        nterm = NTerm(res[0], bool(res[1]))
+        nterm = NTerm(res[0], bool(res[2]))
         if nterm not in n_terms:
             n_terms.append(nterm)
         else:
@@ -104,10 +105,10 @@ def decompose_prod(prod, n_terms, values, terms, codes):
     bodies = re.split(r"\|", units)
     productions = []
     null_prods = []
-    spec = [r"(?P<Spaces>\s+)",
+    spec = [r"(?s){{\s*(?P<Code>.+?)\s*}}",
+            r"(?P<Spaces>\s+)",
             r"(?P<quote>[\"'])(?P<Value>\S+)(?P=quote)",
             r"(?P<Term_NTerm>\w+)",
-            r"{{(?P<Code>\w+)}}",
             ]
     pattern = "|".join(spec)
     for body in bodies:
@@ -133,9 +134,9 @@ def decompose_prod(prod, n_terms, values, terms, codes):
                 t = Code(f"CD{str(len(codes))}", value)
                 formlist.append(t)
                 codes.append(t)
-                nullprod = Production(t, (Null(),), lambda: None)
+                nullprod = Production.cons(t, (Null(),))
                 null_prods.append(nullprod)
-        production = Production(head, tuple(formlist), lambda: None)
+        production = Production.cons(head, tuple(formlist))
         productions.append(production)
     return productions, null_prods, values, terms, codes
 
@@ -149,6 +150,16 @@ def eliminate_null_production(grammar):
             if p not in new_gram:
                 new_gram.append(p)
     return new_gram
+
+
+def substitue_ref(production):
+    p = production.production
+    total = len(p)
+    for num, atom in enumerate(p):
+        if isinstance(atom, Code):
+            startp = -num
+            format_t = [f'Stack[{i}]' for i in range(startp, 0)]
+            atom.source = atom.source.format(*format_t)
 
 
 def load_grammar(grammar_file):
@@ -181,7 +192,7 @@ def load_grammar(grammar_file):
         # 4. strip comments
         pure_grammar = strip_comments(aug_grammar)
 
-        # 5. get productions with | operators.
+        # 5. get productions with | operators. alter to prefixed expression.
         prefixed = re.sub(r"(?m)^(\w+)(\s*?)(:==)", r"\3\2\1", pure_grammar)
         prods = [i for i in re.split(":==", prefixed) if i]
 
@@ -203,6 +214,16 @@ def load_grammar(grammar_file):
 
         # 9. eliminate null productions.
         new_grammar = eliminate_null_production(grammar)
+
+        #for i in new_grammar:
+        #    print(i)
+
+        for i in new_grammar:
+            substitue_ref(i)
+
+        #print("\n\n")
+        #for i in new_grammar:
+        #    print(i)
 
         return new_grammar, symbols, env
 

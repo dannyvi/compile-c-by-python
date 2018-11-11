@@ -2,33 +2,19 @@ from compire.parse.loader import load_grammar
 from compire.parse.table import closure_collection, gen_syntax_table
 from compire.parse.sdt import SDT
 from compire.lexer import Lexer
-from compire.parse import Code
 import os
+
 
 lexer = Lexer()
 
 gram_filename = os.path.dirname(
     os.path.dirname(
-        os.path.abspath(__file__))) + '/compire/gram/a.grammar'
+        os.path.abspath(__file__))) + '/tests/ifelse.grammar'
 
 
 def test_start():
     deps = '-' * 50
     print("\n{}Parse{}".format(deps, deps))
-
-
-def test_productions():
-    print("test productions\n\n")
-    a = load_grammar(gram_filename)
-    grammar, all_symbols, env = a
-    g = closure_collection(grammar, all_symbols)
-    for num in range(len(g)):
-        clos = [i for i in g if i.label == num][0]
-        print(clos.__repr__())
-    for n, i in enumerate(grammar):
-        body = ('{} '*len(i.body)).format(*i.body)
-        # if isinstance()
-        print(f"{n} {i.head} -> {body} {i.head.source if isinstance(i.head, Code) else ''}")
 
 
 def test_grammars():
@@ -46,17 +32,8 @@ def test_grammars():
 
 def test_if_else():
     print(f"testing-if-else{'.'*60}\n")
-    token_stream = lexer.tokenize('if (2 < 3) S1 else S2 int a; int b;')
+    token_stream = lexer.tokenize('if (2 < 3) S1 else S2')
     sdt = SDT.from_gram(gram_filename)
     t, e = sdt.parse(token_stream)
     print("translations\n")
     print(t)
-
-
-def test_declaration():
-    print("\n")
-    token_stream = lexer.tokenize('int a; int b; float c; if (2 < 3) S1 else S2 ')
-    sdt = SDT.from_gram(gram_filename)
-    t,e = sdt.parse(token_stream)
-    print(t)
-

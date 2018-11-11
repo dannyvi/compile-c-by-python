@@ -20,7 +20,7 @@ def test_productions():
     grammar, all_symbols, env = a
     for i in grammar:
         body = ('{} '*len(i.body)).format(*i.body)
-        print(f"{i.head} -> {body}  ---{i.rule.__name__}---")
+        print(f"{i.head} -> {body}")
     g = closure_collection(grammar, all_symbols)
     print(g)
 

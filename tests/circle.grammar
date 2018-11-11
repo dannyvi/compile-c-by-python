@@ -1,12 +1,12 @@
-start       :== stmts                                {{start}}
-stmts       :== stmts stmt                           {{stmts1}}
-stmts       :== stmt                                 {{stmts2}}
-stmt        :== c b c b                              {{stmt}}
-c           :== d e d                                {{c1}}
-c           :== "c"                                  {{c2}}
-b           :== "b"                                  {{b}}
-d           :== "d"                                  {{d}}
-e           :== "e"                                  {{e}}
+start       :== stmts                                {{code=""; syms=""}}
+stmts       :== stmts stmt                           {{c=""}}
+                | stmt                               {{c=""}}
+stmt        :== c b c b                              {{c=""}}
+c           :== d e d                                {{c=""}}
+c           :== "c"                                  {{c=""}}
+b           :== "b"                                  {{c=""}}
+d           :== "d"                                  {{c=""}}
+e           :== "e"                                  {{c=""}}
 
 -----------------------------
 

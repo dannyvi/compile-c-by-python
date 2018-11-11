@@ -1,0 +1,27 @@
+start   :== stmt                                {{code={1}.code; syms=""}}
+stmt    :== "if" "(" {{ L1 =get_label() }} test ")"
+               stmt "else"
+                "S2"                            {{print("AA", {4}.__dict__);code={4}.code;}}
+            | NODE      {{code = ""}}
+
+test    :== NUMBER COMP NUMBER {{ code="if "+ {1}.val + " " + {2}.val + " " + {3}.val + " goto " + {0}.L1 }}
+
+-------------------------------------------------------
+
+import collections
+
+all_labels = []
+
+symbol_table = {}
+
+Sym = collections.namedtuple("Symbol", ["name", "type", "width"])
+
+class Prop:
+    pass
+
+def get_label():
+    n = 'L' + str(len(all_labels))
+    all_labels.append(n)
+    return n
+
+

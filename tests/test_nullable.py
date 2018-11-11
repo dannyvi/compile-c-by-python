@@ -21,7 +21,7 @@ def test_productions():
     grammar, all_symbols, env = a
     for n, i in enumerate(grammar):
         body = ('{} '*len(i.body)).format(*i.body)
-        print(f"{n} {i.head} -> {body}  ---{i.rule.__name__}---")
+        print(f"{n} {i.head} -> {body}")
     #new_g = eliminate_null_production(grammar)
     #print("\nNew grammar\n")
     #for i in new_g:

@@ -1,4 +1,4 @@
-start       :== stmt                                {{start}}
+start       :== stmt                                {{code=""; syms=""}}
 stmt        :== declare                             {{stmt}}
 declare     :== type ID ";"                         {{declare}}
 type        :== base component                      {{type}}

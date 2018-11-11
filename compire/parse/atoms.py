@@ -1,7 +1,7 @@
 import collections
 import itertools
+import re
 
-# code_obj_list = []
 
 class Symbol:
     def __init__(self, symbol):
@@ -15,6 +15,9 @@ class Symbol:
 
     def __eq__(self, other):
         return self.symbol == other.symbol and type(self) == type(other)
+
+    def __len__(self):
+        return len(self.__str__())
 
     def __hash__(self):
         return hash(self.__str__())
@@ -55,31 +58,44 @@ class Null(Symbol):
 
 
 class Code(NTerm):
-    def __init__(self, symbol, code):
+    def __init__(self, symbol, source):
         # n = len(code_obj_list)
         # symbol = f"Cd{n}"
         # code_obj_list.append(symbol)
         super(Code, self).__init__(symbol, nullable=True)
-        self.code = code
+        self.source = re.sub(r";?\s*\n+\s*", ";", source)
 
     def __str__(self):
+        # return f"♮{self.source}♮"
         return f"♮{self.symbol}♮"
 
 
 class Production:
-    def __init__(self, head, body, rule):
-        self.head, self.body, self.rule = head, body, rule
+    def __init__(self, ptuple):
+        self.production = ptuple
+
+    @property
+    def head(self):
+        return self.production[0]
+
+    @property
+    def body(self):
+        return self.production[1:]
+
+    @classmethod
+    def cons(cls, head, body):
+        return cls((head,)+body)
 
     def __iter__(self):
-        return iter((self.head, self.body, self.rule))
+        return iter(self.production)
 
     def __eq__(self, other):
-        return self.head == other.head and self.body == other.body
+        return self.production == other.production
 
     def __str__(self):
-        g = "{} " * len(self.body)
+        g = ' '.join(["{}"] * len(self.body))
         s = g.format(*self.body)
-        return f"<{self.head} -> {s} {self.rule.__name__}(...)>"
+        return f"<{self.head} -> {s}>"
 
     def __repr__(self):
         return self.__str__()
@@ -99,8 +115,11 @@ class Production:
             b = tuple(filter(None, i))
             if b:
                 if isinstance(self.head, Code):
-                    p = Production(self.head, b, self.rule)
+                    p = Production.cons(self.head, b)
                 else:
-                    p = Production(NTerm(self.head.symbol), b, self.rule)
+                    p = Production.cons(NTerm(self.head.symbol), b)
                 productions.append(p)
         return productions
+
+    def is_null(self):
+        return self.body == (Null(),)

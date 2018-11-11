@@ -14,7 +14,7 @@ def test_production():
             NTerm("nt2"),
             NTerm("nt3", nullable=True)
             )
-    p = Production(head, body, rule)
+    p = Production.cons(head, body)
     print(p)
     for i in p.remove_null():
         print(i)

@@ -1,20 +1,37 @@
-start      :== stmts                                {{start}}
-stmts      :== stmts stmt                           {{stmts1}}
-stmts      :== stmt                                 {{stmts2}}
-stmt       :== "if" "(" "C" ")"
-               "S1" "else"
-                "stmts"
-                                           {{stmt1}}
-                                           | "if" "("
-                                           "C" ")" "S1" {{stmt2}}
-stmt       :== declare                              {{stmt3}}
-declare    :== type ID ";"                          {{declare}}
-type       :== base                                 {{type1}}
-# type       :== base composit                        {{type2}}
-base       :== "int"                                {{base1}}
-base       :== "float"                              {{base2}}
-# composit   :== "[" NUMBER "]"                       {{composit1}}
-# composit   :== "[" NUMBER "]"  composit             {{composit2}}
+start   :== stmts                            {{code={1}.ir; syms={1}.syms }}
+
+stmts   :== stmts {{Nx=get_label()}} stmt
+            {{ ir={1}.ir + {3}.ir; syms={1}.syms+{3}.syms }}
+          | {{Nx=get_label()}} stmt                {{ ir={2}.ir; syms={2}.syms }}
+
+stmt    :== if_else_stmt       {{ir={1}.ir; syms='' }}
+          | declare      {{ir, syms = '', {1}.syms}}
+          | NODE  {{ir, syms = {1}.val, ""}}
+
+if_else_stmt :== if_stmt   {{ir = {1}.ir}}
+               | if_stmt else_stmt {{ir ="\n".join([{1}.ir, {2}.ir])}}
+if_stmt :== 'if' '(' {{ L1 = get_label() }} test ')' NODE
+             {{ir = '\n'.join([{4}.ir, {6}.val]);L1={3}.L1;Nx={0}.Nx}}
+else_stmt :== 'else' {{Nx={0}.Nx}} stmt
+                    {{ g='goto '+{0}.Nx; l='label '; l1=l+{0}.L1; l2=l+{0}.Nx;
+                       ir='\n'.join([g, l1, {3}.ir, l2])}}
+test    :== NUMBER COMP NUMBER
+            {{ir=' '.join(['if not', {1}.val, {2}.val, {3}.val, 'goto', {0}.L1])}}
+
+declare :==
+            declare type ID ';'
+                {{syms =",\n".join([Sym({3}.val,{2}.tp,{2}.wth).__str__(), {1}.syms])}}
+           | type ID ';'
+            {{syms =Sym({2}.val,{1}.tp,{1}.wth).__str__()}}
+
+type    :==
+           base component                      {{tp={2}.tp;wth={2}.wth;}}
+          |
+          base                                {{tp={1}.tp;wth={1}.wth}}
+base    :== 'int'                                {{tp='int';wth=4}}
+          | 'float'                                   {{tp='float';wth=8}}
+component :==  '[' NUMBER ']'                         {{tp={0}.tp;wth=int({2}.val)*{0}.wth}}
+          | component '[' NUMBER ']' {{tp={0}.tp;wth=int({3}.val)*{1}.wth*{0}.wth}}
 
 -------------------------------------------------------
 
@@ -24,7 +41,7 @@ all_labels = []
 
 symbol_table = {}
 
-Symbol = collections.namedtuple("Symbol", ["name", "type", "width"])
+Sym = collections.namedtuple('Sym', ['name', 'type', 'width'])
 
 class Prop:
     pass
@@ -63,29 +80,29 @@ def stmts2(stmt_cb):
 def stmt1(IF, LPAR, c, RPAR, s1, ELSE, s2):
     def callback(inh):
         L1 = get_label()
-        C_code = c.code(f_cond=L1)
-        S1_code = s1.code()
-        S2_code = s2.code()
-        inter_code = """\
+        C_ir = c.ir(f_cond=L1)
+        S1_ir = s1.ir()
+        S2_ir = s2.ir()
+        inter_ir = '''\
         {}
         {}
         goto {}
         label {}
-        {}""".format(C_code, S1_code, inh.next_label, L1, S2_code)
-        return inter_code
+        {}'''.format(C_ir, S1_ir, inh.next_label, L1, S2_ir)
+        return inter_ir
     return callback
 
 def stmt2(IF, LPAR, c, RPAR, s1):
     def callback(inh):
         L1 = get_label()
-        C_code = c.code(f_cond=L1)
-        S1_code = s1.code()
-        inter_code = """\
+        C_ir = c.ir(f_cond=L1)
+        S1_ir = s1.ir()
+        inter_ir = '''\
         {}
         {}
         goto {}
-        label {}""".format(C_code, S1_code, inh.next_label, L1 )
-        return inter_code
+        label {}'''.format(C_ir, S1_ir, inh.next_label, L1 )
+        return inter_ir
     return callback
 
 def stmt3(declare_cb):
@@ -95,7 +112,7 @@ def stmt3(declare_cb):
 
 def declare(_type, _id, end):
     def callback():
-        symbol = Symbol(_id.value, _type.name, _type.width)
+        symbol = Sym(_id.value, _type.name, _type.width)
         symbol_table[_id.value] = symbol
         return ''
     return callback
