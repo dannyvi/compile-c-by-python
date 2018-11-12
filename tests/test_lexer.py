@@ -1,4 +1,5 @@
 from compire.lexer import Token, load_lex, Lexer
+import pytest
 
 
 def test_start():
@@ -19,3 +20,7 @@ def test_tokenizer():
     lexer = Lexer()
     token_stream = list(lexer.tokenize('if ( 2 < 3 ) S1 else stmts'))
     print(token_stream)
+    token_stream = list(lexer.tokenize('if ( 2 < 3 ) S1 \n else \n stmts'))
+    print(token_stream)
+    with pytest.raises(RuntimeError):
+        token_stream = list(lexer.tokenize('if ( 2 < 3 ) 11a S1 \n else \n stmts'))

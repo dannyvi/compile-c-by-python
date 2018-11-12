@@ -63,7 +63,9 @@ class Code(NTerm):
         # symbol = f"Cd{n}"
         # code_obj_list.append(symbol)
         super(Code, self).__init__(symbol, nullable=True)
-        self.source = re.sub(r";?\s*\n+\s*", ";", source)
+        t = re.sub(r"[\t ]+", "", source)
+        t2 = re.sub(r",\n", ",", t)
+        self.source = re.sub(r";?\s*\n+\s*", ";", t2)
 
     def __str__(self):
         # return f"♮{self.source}♮"

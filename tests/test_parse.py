@@ -4,6 +4,7 @@ from compire.parse.sdt import SDT
 from compire.lexer import Lexer
 from compire.parse import Code
 import os
+import pytest
 
 lexer = Lexer()
 
@@ -42,6 +43,14 @@ def test_grammars():
     for j, i in enumerate(_state_map):
         _state = [str(j), ] + i
         print(s.format(*_state))
+
+
+def test_error():
+    print(f"testing-error{'.'*60}\n")
+    token_stream = lexer.tokenize('if (2 < 3 S1 else S2 int a; \n int b;')
+    sdt = SDT.from_gram(gram_filename)
+    with pytest.raises(SyntaxError):
+        t, e = sdt.parse(token_stream)
 
 
 def test_if_else():

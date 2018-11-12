@@ -58,7 +58,7 @@ class SDT:
         action = self.get_action(self.stack[-1], token)
         if action[0] == '$':
             self.accept = True   # success
-            self.translation = self.stack[-1].code + self.stack[-1].syms
+            self.translation = self.stack[-1].code
         # shift action push a current state into stack
         elif action[0] == 's':
             index = int(action[1:])
