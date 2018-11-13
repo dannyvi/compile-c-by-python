@@ -18,7 +18,6 @@ The procedure of loading is below:
 The main function is ``load_grammar`` and it
 returns a ``grammar list``, a ``symbol list``, and an ``env``.
 """
-
 import re
 from functools import reduce
 from .atoms import Production, NTerm, Term, Value, Code, Null
@@ -73,7 +72,8 @@ def get_none_terminals(prod_str_list):
     spec = re.compile(r"""(?s)^\s*?(?P<Head>\w+)     # head Nterm
                           .*?                  # any character
                           (?:(?P<Multi>(?:\|\s*{{.*?}}.*?{{.*?}}\s*)$)|
-                          (?P<Nullable>(?:\|\s*|\|\s*{{.*?}}\s*)?$))""", re.X)
+                          (?P<Nullable>(?:\|\s*|\|\s*{{.*?}}\s*)?$))""",
+                      re.X)
     for p in prod_str_list:
         res = re.match(spec, p).groups()
         nterm = NTerm(res[0], bool(res[2]))
@@ -215,15 +215,8 @@ def load_grammar(grammar_file):
         # 9. eliminate null productions.
         new_grammar = eliminate_null_production(grammar)
 
-        #for i in new_grammar:
-        #    print(i)
-
         for i in new_grammar:
             substitue_ref(i)
-
-        #print("\n\n")
-        #for i in new_grammar:
-        #    print(i)
 
         return new_grammar, symbols, env
 

@@ -35,14 +35,20 @@ def test_if_else():
 
 
 def test_declaration():
+    print("\nparsing ---------- int a; \n")
+    parser = Parser()
+    translation, env = parser.parse_stream('int a; ')
+    print(translation, env['symbol_table'])
     print("\nparsing ---------- int a; int b; float c;\n")
     parser = Parser()
     translation, env = parser.parse_stream('int a; int b; float c;')
     print(translation, env['symbol_table'])
-    print("\nparsing ---------- int[4][3] a;\n")
+    print("\nparsing ---------- int[4][3][5] a;\n")
     parser = Parser()
-    translation, env = parser.parse_stream('int[4][3] a;')
+    translation, env = parser.parse_stream('int[4][3][5] a;')
     print(translation, env['symbol_table'])
-    #print("\nrecord int[4][3] a;\n")
-    # translation = parser.parse_stream('record { int[4][3] a; int k; float g;} s;')
-    # print(translation[0])
+    print(f"\nparsing {'-'*20} record {{ int[4] a; int k; float g;}} s; int...")
+    parser = Parser()
+    stream = 'record { int[4] a; int k; float g; } s; int z; float p; int c;'
+    translation, env = parser.parse_stream(stream)
+    print(translation, env['symbol_table'])
