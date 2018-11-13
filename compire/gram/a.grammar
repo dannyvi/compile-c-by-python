@@ -1,35 +1,31 @@
 start
-  :== stmts {{ code={1}.ir; }}
+  :== stmts
 
 stmts
-  :== stmts {{ Nx=get_label() }}
-      stmt  {{ ir={1}.ir + {3}.ir; }}
-    | {{ Nx=get_label() }}
-      stmt {{ ir={2}.ir; }}
+  :== stmts {{ Nx=get_label() }}  stmt
+    | {{ Nx=get_label() }} stmt
 
 stmt
-  :== if_else_stmt {{ ir={1}.ir; }}
-    | declare      {{ ir = '' }}
-    | NODE         {{ ir = {1}.val }}
+  :== if_else_stmt
+    | declare
+    | NODE         {{ gen({1}.val) }}
 
 if_else_stmt
-  :== if_clause              {{ ir = {1}.ir+'\n' }}
-    | if_clause else_stmt    {{ ir ="\n".join([{1}.ir, {2}.ir, {2}.l2]) }}
+  :== if_clause
+    | if_clause else_stmt
 
 if_clause
   :== 'if' '('  {{ L1 = get_label() }}
       test ')'
       NODE
       {{ Nx={0}.Nx; L1={3}.L1; tmp = 'if ! '+{4}.true+' goto '+L1;
-         ir = '\n'.join([tmp, {6}.val]);
       }}
 
 else_stmt
-  :== 'else' {{Nx={0}.Nx}}
+  :== 'else'
+      {{Nx={0}.Nx;g='goto '+{0}.Nx; l='label '; l1=l+{0}.L1; l2=l+{0}.Nx;
+        gen(g,l1, l2)}}
       stmt
-      {{ g='goto '+{0}.Nx; l='label '; l1=l+{0}.L1; l2=l+{0}.Nx;
-         ir='\n'.join([g, l1, {3}.ir])
-      }}
 
 test
   :== NUMBER COMP NUMBER   {{ true=' '.join([{1}.val, {2}.val, {3}.val]) }}
@@ -74,6 +70,8 @@ component
 import collections
 from reprlib import recursive_repr as _recursive_repr
 
+code = ""
+
 class SymTb(collections.OrderedDict):
     """Store symbols in an OrderedDict."""
     def __setitem__(self, key, value):
@@ -101,8 +99,6 @@ class SymTb(collections.OrderedDict):
             raise KeyError('Not declared variable: {key}')
 
 
-all_labels = []
-
 # Sym = collections.namedtuple('Sym', ['name', 'type', 'width', 'offset'])
 Sym = collections.namedtuple('S', 't w f', defaults=['',0,0])
 newEnv = lambda : SymTb({'': Sym()})
@@ -111,9 +107,15 @@ symbol_table = {'global':newEnv()}
 environ = symbol_table['global']
 
 
+all_labels = []
+
 def get_label():
     n = 'L' + str(len(all_labels))
     all_labels.append(n)
     return n
 
 
+
+def gen(*args):
+    global code
+    code += ' '.join(args) + '\n'

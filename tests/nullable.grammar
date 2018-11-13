@@ -12,6 +12,7 @@ component   :== "[" NUMBER "]" component {{component}}
 
 import collections
 
+code = ""
 all_labels = []
 
 symbol_table = {}

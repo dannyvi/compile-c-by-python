@@ -12,6 +12,7 @@ e           :== "e"                                  {{c=""}}
 
 import collections
 
+code = ""
 all_labels = []
 
 symbol_table = {}

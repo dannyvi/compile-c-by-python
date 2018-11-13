@@ -10,6 +10,7 @@ test    :== NUMBER COMP NUMBER {{ code="if "+ {1}.val + " " + {2}.val + " " + {3
 
 import collections
 
+code = ""
 all_labels = []
 
 symbol_table = {}
