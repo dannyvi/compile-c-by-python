@@ -1,6 +1,7 @@
 NUMBER      :=  r'(?<!\w)\d+(\.\d*)?(?!\w)'    # numbers
 COMP        :=  r'==|<=|>=|<|>'
 ASSIGN      :=  r'='
+OP          :=  r'[\+-]'
 NODE        :=  r'S1|S2|C|stmts'
 ID          :=  r'[A-Za-z_][A-Za-z0-9_]*'
 DELIMITER   :=  r'[(),;\[\]{}]'

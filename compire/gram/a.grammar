@@ -2,8 +2,8 @@ start
   :== stmts
 
 stmts
-  :== stmts {{ Nx=get_label() }}  stmt
-    | {{ Nx=get_label() }} stmt
+  :== stmts {{ Nx=new_label() }}  stmt
+    | {{ Nx=new_label() }} stmt
 
 stmt
   :== if_else_stmt
@@ -15,7 +15,7 @@ if_else_stmt
     | if_clause else_stmt
 
 if_clause
-  :== 'if' '('  {{ L1 = get_label() }}
+  :== 'if' '('  {{ L1 = new_label() }}
       test ')'
       NODE
       {{ Nx={0}.Nx; L1={3}.L1; tmp = 'if ! '+{4}.true+' goto '+L1;
@@ -59,12 +59,15 @@ component
   :== '[' NUMBER ']'             {{ tp={0}.tp;wth=int({2}.val)*{0}.wth }}
     | component '[' NUMBER ']' {{ tp={0}.tp;wth=int({3}.val)*{1}.wth*{0}.wth }}
 
-#assignment_expression
-#  :== ID '=' expression ';'
-#      {{ ir= {3}.ir + gen(environ.gett({1}.val),'=',{3}.addr) }}
+assignment_expression
+  :== ID '=' expression ';'
+      {{ gen(environ.gett({1}.val), '=', {3}.addr) }}
 
-#expression
-#  :== expression '+' expression {{  }}
+expression
+  :== expression OP expression
+      {{ addr=newTemp(); gen(addr, '=', {1}.addr, {2}.val, {2}.addr) }}
+    | '-' expression {{ addr=new_tmp(); gen(addr, '=', 'minus', {2}.addr)}}
+
 -------------------------------------------------------
 
 import collections
@@ -88,34 +91,43 @@ class SymTb(collections.OrderedDict):
         if not self:
             return '%s()' % (self.__class__.__name__,)
         n = self.__class__.__name__
-        return '%s(%r)' % (n,
-                list(map(lambda x: (x[0],
-                ) + x[1] if not x[1].t.__repr__().startswith(n) else
-                (x[0],) + ('record', x[1][1], x[1][2]), self.items())))
+        l = list(map(lambda x: (x[0],) + x[1]
+                                if not x[1].t.__repr__().startswith(n) else
+                                (x[0],) + ('record', x[1][1], x[1][2]),
+                                self.items()))
+        return '%s(%r)' % (n,l)
+
     def gett(self, key):
         if self.get(key):
             return key
         else:
             raise KeyError('Not declared variable: {key}')
 
-
-# Sym = collections.namedtuple('Sym', ['name', 'type', 'width', 'offset'])
 Sym = collections.namedtuple('S', 't w f', defaults=['',0,0])
 newEnv = lambda : SymTb({'': Sym()})
 
 symbol_table = {'global':newEnv()}
 environ = symbol_table['global']
 
+allables = []
 
-all_labels = []
 
-def get_label():
-    n = 'L' + str(len(all_labels))
-    all_labels.append(n)
+def new_label():
+    n = 'L' + str(len(allables))
+    allables.append(n)
     return n
-
 
 
 def gen(*args):
     global code
     code += ' '.join(args) + '\n'
+
+templabels = []
+
+def new_tmp():
+    n = 'T' + str(len(templabels))
+    templabels.append(n)
+    return n
+
+def clear_tmp():
+    templabels.clear()
