@@ -30,6 +30,7 @@ class SDT:
         self.stack = [State(0)]
         self.accept = False
         self.translation = ''
+        self.env['init'].__call__()
 
     def load_grammar(self, gram_filename):
         self.grammar, self.symbols, self.env = load_grammar(gram_filename)
@@ -85,8 +86,9 @@ class SDT:
         self.ahead(Token("$", "$", 0, 0))
         if self.accept:
             translation = self.translation
+            symbol_table = self.env['symbol_table']
             self.clear()
-            return translation, self.env
+            return translation, symbol_table
 
     def shift(self, index, token):
         state = State(index, **token.__dict__)

@@ -9,10 +9,11 @@ stmt
   :== if_else_stmt
     | declare
     | NODE         {{ gen({1}.val) }}
+    | assignment_expression
 
 if_else_stmt
   :== if_clause
-    | if_clause else_stmt
+    | if_clause else_clause
 
 if_clause
   :== 'if' '('  {{ L1 = new_label() }}
@@ -21,7 +22,7 @@ if_clause
       {{ Nx={0}.Nx; L1={3}.L1; tmp = 'if ! '+{4}.true+' goto '+L1;
       }}
 
-else_stmt
+else_clause
   :== 'else'
       {{Nx={0}.Nx;g='goto '+{0}.Nx; l='label '; l1=l+{0}.L1; l2=l+{0}.Nx;
         gen(g,l1, l2)}}
@@ -33,47 +34,63 @@ test
 declare
   :== declare type ID ';'
       {{ offset = environ.offset();
-         environ.update([( {3}.val, Sym({2}.tp, {2}.wth, offset) )])
+         environ.update([( {3}.val, Sym({2}.tp, {2}.tp.w, offset) )])
       }}
-         # environ.update({{ {3}.val: Sym({2}.tp, {2}.wth, offset) }})
     | type ID ';'
       {{ offset = environ.offset();
-         environ.update([( {2}.val, Sym({1}.tp, {1}.wth, 0) )]);
+         environ.update([( {2}.val, Sym({1}.tp, {1}.tp.w, offset) )]);
       }}
-         # environ.update({{ {2}.val: Sym({1}.tp, {1}.wth, 0) }});
 
 type
-  :== base component                      {{ tp={2}.tp;wth={2}.wth; }}
-    | base                                {{ tp={1}.tp;wth={1}.wth }}
+  :== base component                      {{ tp={2}.tp; }}
+    | base                                {{ tp={1}.tp; }}
     | 'record' '{' {{ global environ; bk=environ; environ=newEnv() }}
       declare '}'
-      {{ global environ; wth=environ.offset(); tp=environ;
+      {{ global environ; tp=Type(environ, environ.offset());
          environ={3}.bk;
       }}
 
 base
-  :== 'int'                               {{ tp='int';wth=4 }}
-    | 'float'                             {{ tp='float';wth=8 }}
+  :== 'int'                               {{ tp=Type('int',4) }}
+    | 'float'                             {{ tp=Type('float',8) }}
 
 component
-  :== '[' NUMBER ']'             {{ tp={0}.tp;wth=int({2}.val)*{0}.wth }}
-    | component '[' NUMBER ']' {{ tp={0}.tp;wth=int({3}.val)*{1}.wth*{0}.wth }}
+  :== '[' NUMBER ']'             {{ t={0}.tp; tp=Type(t, t.w*int({2}.val)) }}
+                                 # {{ tp={0}.tp;wth=int({2}.val)*{0}.wth }}
+    | component '[' NUMBER ']'
+        {{ t={1}.tp;v=int({3}.val);
+           w = t.w if not isinstance(t.t, Type) else t.t.w*v;
+           tp=Type(Type(t.t, w), t.w*v) }}
+                             #{{ tp={0}.tp;wth=int({3}.val)*{1}.wth*{0}.wth }}
 
 assignment_expression
   :== ID '=' expression ';'
-      {{ gen(environ.gett({1}.val), '=', {3}.addr) }}
+      {{ gen(environ.getsym({1}.val), '=', {3}.addr) }}
+    | postfix_expression '=' expression ';'
 
 expression
   :== expression OP expression
-      {{ addr=newTemp(); gen(addr, '=', {1}.addr, {2}.val, {2}.addr) }}
+      {{ addr=new_tmp(); gen(addr, '=', {1}.addr, {2}.val, {3}.addr) }}
     | '-' expression {{ addr=new_tmp(); gen(addr, '=', 'minus', {2}.addr)}}
+    | '(' expression ')' {{ addr = {2}.addr }}
+    | ID  {{ addr = environ.getsym({1}.val) }}
+    | NUMBER  {{ addr = {1}.val }}
+
+postfix_expression
+  :== ID '[' expression ']'
+      {{ array=environ.get({1}.val); tp=array.t; addr=new_tmp();
+         gen(addr,'=', {3}.addr, '*', str(tp.t.w));
+      }}
+    | postfix_expression '[' expression ']'
+      {{ tp={1}.tp.t; t=new_tmp(); addr=new_tmp();
+         gen(t,'=', {3}.addr, '*', str(tp.t.w)); gen(addr, '=', {1}.addr, '+', t);
+      }}
 
 -------------------------------------------------------
 
 import collections
 from reprlib import recursive_repr as _recursive_repr
 
-code = ""
 
 class SymTb(collections.OrderedDict):
     """Store symbols in an OrderedDict."""
@@ -82,39 +99,53 @@ class SymTb(collections.OrderedDict):
             raise KeyError(f"duplicated declarations!! {key} ")
         else:
             collections.OrderedDict.__setitem__(self, key, value)
-    def offset(self):
-        item = self[next(reversed(self))]
-        return item.w+item.f
+
     @_recursive_repr()
     def __repr__(self):
         'od.__repr__() <==> repr(od)'
         if not self:
             return '%s()' % (self.__class__.__name__,)
         n = self.__class__.__name__
-        l = list(map(lambda x: (x[0],) + x[1]
-                                if not x[1].t.__repr__().startswith(n) else
-                                (x[0],) + ('record', x[1][1], x[1][2]),
-                                self.items()))
+        l = list(filter(lambda x: bool(x[0]),
+                    map(lambda x: (x[0],) + x[1] ,
+                               # if not x[1].t.__repr__().startswith(n) else
+                               # (x[0],) + ('record', x[1][1], x[1][2]),
+                                self.items())))
         return '%s(%r)' % (n,l)
 
-    def gett(self, key):
+    @property
+    def t(self):
+        return 'Syms'
+
+    def offset(self):
+        item = self[next(reversed(self))]
+        return item.w+item.f
+
+    def getsym(self, key):
         if self.get(key):
             return key
         else:
             raise KeyError('Not declared variable: {key}')
 
+Type = collections.namedtuple('Type', 't w')
+#Type.__repr__=lambda self: self.t.__str__()+f'<{self.w}>'
+
 Sym = collections.namedtuple('S', 't w f', defaults=['',0,0])
 newEnv = lambda : SymTb({'': Sym()})
 
-symbol_table = {'global':newEnv()}
-environ = symbol_table['global']
+def init():
+    global code, symbol_table, environ, allabels, templabels
+    code = ""
+    symbol_table = {'global':newEnv()}
+    environ = symbol_table['global']
+    allabels = []
+    templabels = []
 
-allables = []
-
+init()
 
 def new_label():
-    n = 'L' + str(len(allables))
-    allables.append(n)
+    n = 'L' + str(len(allabels))
+    allabels.append(n)
     return n
 
 
@@ -122,7 +153,6 @@ def gen(*args):
     global code
     code += ' '.join(args) + '\n'
 
-templabels = []
 
 def new_tmp():
     n = 'T' + str(len(templabels))

@@ -22,6 +22,11 @@ Symbol = collections.namedtuple("Symbol", ["name", "type", "width"])
 class Prop:
     pass
 
+def init():
+    global all_labels, symbol_table, code
+    all_labels = []
+    symbol_table = {}
+    code = ""
 
 def start(stmts_cb):
     def callback():

@@ -19,6 +19,12 @@ symbol_table = {}
 
 Symbol = collections.namedtuple("Symbol", ["name", "type", "width"])
 
+def init():
+    global code, all_labels, symbol_table
+    code = ""
+    all_labels = []
+    symbol_table = {}
+
 class Prop:
     pass
 

@@ -14,7 +14,8 @@ code = ""
 all_labels = []
 
 symbol_table = {}
-
+def init():
+    pass
 Sym = collections.namedtuple("Symbol", ["name", "type", "width"])
 
 class Prop:
