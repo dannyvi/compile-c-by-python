@@ -113,10 +113,10 @@ class SDT:
         # pop the states of production body
         else:
             if isinstance(body[-1], Code):
-                loc = self.stack[-1].__dict__.copy()
+                loc = self.stack[-1].__dict__
                 loc.pop('index')
             else:
-                loc = self.stack[-len(body)].__dict__.copy()
+                loc = self.stack[-len(body)].__dict__
                 loc.pop('index')
             for _ in body:
                 self.stack.pop()

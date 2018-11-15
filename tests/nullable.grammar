@@ -1,12 +1,13 @@
 start       :== stmt                                {{code=""; syms=""}}
 stmt        :== declare                             {{stmt}}
+              | postfix                             {{pass}}
 declare     :== type ID ";"                         {{declare}}
 type        :== base component                      {{type}}
 base        :== "int" {{base}}
                     | "float"                     {{base}}
 component   :== "[" NUMBER "]" component {{component}}
                  |
-
+postfix     :== ID component {{print('eee')}}
 
 -----------------------------
 

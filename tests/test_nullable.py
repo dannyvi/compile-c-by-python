@@ -57,5 +57,7 @@ def test_reduction():
     print(list(t))
     translation, symbol_table = parser.parse_stream('int[5] a;')
     print(symbol_table)
-    translation, env = parser.parse_stream('int[5] a;')
+    translation, symbol_table = parser.parse_stream('int[5][3] a;')
+    print(symbol_table)
+    translation, symbol_table = parser.parse_stream('s[5][3]')
     print(symbol_table)

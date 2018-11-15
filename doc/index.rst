@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to compiie's documentation!
+Welcome to compire's documentation!
 ===================================
 
 .. toctree::
@@ -14,45 +14,65 @@ Welcome to compiie's documentation!
    changes
    ref/index
 
-example::
-
-   aabb
+Diagram
+-------------------
 
 .. graphviz::
 
-   digraph idp_modules{
+   digraph compiler_modules{
      bgcolor="none";
-     margin = .5;
      rankdir = TB;
-     fontsize = 10;
-     node [margin=0.06 ,width=0, height=0, fontsize=10, shape = "record", fontcolor="black"];
-     edge [ color="grey47"];
+     ranksep = 0.15;
+     fontsize = 28;
+     margin = "0.3, 0.5";
+     fontcolor = "#333385";
+     nodesep = 1.0;
+     overlap = false;
+     labelloc="t" ;
+     label = "Complier Activities";
+     node [ fontsize=14,color="#98a3b8", fontcolor="#424278"];
+     edge [ color="#cccccc", arrowsize=0.6];
 
-     doc_index [label="文档"];
+     node [shape=record];
+     grammar [shape=record,label="{ <f0>  Grammar  | <f1> Translation  | <f2> Definition  } "];
+     lexrule [shape=record,label=" Lex Regex "];
 
-     intro [label = "简介"];
-     guide [label = "导引"];
-     reference [label = "参考"];
+     {rank = same; grammar; lexrule; source;}
+     node [shape=ellipse, style=filled, fillcolor="#faf3f3", color=none];
+     {rank = same;
+      Loader[margin="0.3,0.1", shape=box, style=filled, fontsize=21, fontcolor="#384485", fillcolor ="#d8dfef"];
+      Lexer[margin="0.3,0.1", shape=box, style=filled, fontsize=21, fontcolor="#384485", fillcolor ="#d8dfef"];
+      }
+     grammar -> Loader -> Env -> SDT [weight=1.0];
 
-     doc_index -> intro;
-     doc_index -> guide;
-     doc_index -> reference;
-
-     { rank = same; intro; guide; reference; }
-
-     backend [label = "后端"];
-     frontend [label = "前端"];
-     scraper [label = "爬虫"];
-     ci      [label = "持续集成"];
-     documentation [label = "文档"];
-
-     guide -> backend;
-     guide -> frontend;
-     guide -> scraper;
-     guide -> ci;
-     guide -> documentation;
-
-     { rank = same; backend; frontend; scraper; ci; documentation; }
+     {rank = same;
+      Env [shape=box, style="rounded,filled",fillcolor="#f9f3e0"];
+      syntax_table[shape=box, style=filled,fillcolor="#eaf6ed"];
+      symbols[shape=box, style=filled,fillcolor="#eaf6ed"];
+      token_stream [shape=box, style=filled, fillcolor="#eaf6ed"];
+     }
+     {rank = same;
+      SDT [margin="0.4,0.1",shape=box, style=filled, fontsize=28, fontcolor="#333385", fillcolor ="#d8dfef"];
+      parse [shape=ellipse, style=filled, fillcolor="#faf3f3", color="#faf3f3"];
+      }
+     SDT -> parse ;
+     Loader -> syntax_table;
+     syntax_table -> SDT ;
+     Loader -> symbols -> SDT;
+     rule [shape=box, style="rounded,filled",fillcolor="#f9f3e0"];
+     code [shape=box, style="rounded,filled",fillcolor="#f9f3e0"];
+     {rank = same; stack -> shift -> ahead [dir=back]; }
+     stack [shape=box, style=filled, fillcolor="#eaf6ed"];
+     SDT -> stack;
+     lexrule -> Lexer -> token_stream -> parse -> ahead -> reduce ;
+     reduce -> stack [weight=1.2];
+     source -> Lexer;
+     reduce -> rule [dir=both];
+     parse -> code [weight=0.01];
+     stack -> rule ;
+     rule -> code ;
+     Env -> rule [style=dotted, arrowhead=none, weight=0.01];
+     Env -> code [style=dotted, arrowhead=none, weight=0.01];
 
    }
 

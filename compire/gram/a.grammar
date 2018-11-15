@@ -33,12 +33,12 @@ test
 
 declare
   :== declare type ID ';'
-      {{ offset = environ.offset();
-         environ.update([( {3}.val, Sym({2}.tp, {2}.tp.w, offset) )])
+      {{ offset = environ.w;
+         environ.update([( {3}.val, Entry({2}.tp, {2}.tp.w, offset) )])
       }}
     | type ID ';'
-      {{ offset = environ.offset();
-         environ.update([( {2}.val, Sym({1}.tp, {1}.tp.w, offset) )]);
+      {{ offset = environ.w;
+         environ.update([( {2}.val, Entry({1}.tp, {1}.tp.w, offset) )]);
       }}
 
 type
@@ -46,7 +46,7 @@ type
     | base                                {{ tp={1}.tp; }}
     | 'record' '{' {{ global environ; bk=environ; environ=newEnv() }}
       declare '}'
-      {{ global environ; tp=Type(environ, environ.offset());
+      {{ global environ;w=environ.w; tp=Type(environ, w);
          environ={3}.bk;
       }}
 
@@ -55,18 +55,13 @@ base
     | 'float'                             {{ tp=Type('float',8) }}
 
 component
-  :== '[' NUMBER ']'             {{ t={0}.tp; tp=Type(t, t.w*int({2}.val)) }}
-                                 # {{ tp={0}.tp;wth=int({2}.val)*{0}.wth }}
-    | component '[' NUMBER ']'
-        {{ t={1}.tp;v=int({3}.val);
-           w = t.w if not isinstance(t.t, Type) else t.t.w*v;
-           tp=Type(Type(t.t, w), t.w*v) }}
-                             #{{ tp={0}.tp;wth=int({3}.val)*{1}.wth*{0}.wth }}
-
+  :== '[' NUMBER ']'  {{ bt={0}.tp; tp=Type(bt, bt.w*int({2}.val)) }}
+    | '[' NUMBER ']' {{tp={0}.tp}} component
+      {{ bt={5}.tp; v=int({2}.val); tp=Type(bt, bt.w*v) }}
 assignment_expression
   :== ID '=' expression ';'
       {{ gen(environ.getsym({1}.val), '=', {3}.addr) }}
-    | postfix_expression '=' expression ';'
+    | postfix_expression '=' expression ';'  {{gen({1}.base,'[', {1}.addr ,']','=',{3}.addr) }}
 
 expression
   :== expression OP expression
@@ -75,19 +70,26 @@ expression
     | '(' expression ')' {{ addr = {2}.addr }}
     | ID  {{ addr = environ.getsym({1}.val) }}
     | NUMBER  {{ addr = {1}.val }}
+    | postfix_expression {{addr = new_tmp(); gen(addr, '=', {1}.base, '[', {1}.addr, ']')}}
 
 postfix_expression
   :== ID '[' expression ']'
-      {{ array=environ.get({1}.val); tp=array.t; addr=new_tmp();
+      {{ array=environ.get({1}.val);
+         base = {1}.val;
+         tp=array.t; addr=new_tmp();
          gen(addr,'=', {3}.addr, '*', str(tp.t.w));
       }}
     | postfix_expression '[' expression ']'
-      {{ tp={1}.tp.t; t=new_tmp(); addr=new_tmp();
-         gen(t,'=', {3}.addr, '*', str(tp.t.w)); gen(addr, '=', {1}.addr, '+', t);
+      {{ array={1}.array;
+         base={1}.base;
+         tp={1}.tp.t; t=new_tmp(); addr=new_tmp();
+         gen(t,'=', {3}.addr, '*', str(tp.t.w));
+         gen(addr, '=', {1}.addr, '+', t);
       }}
 
 -------------------------------------------------------
 
+import re
 import collections
 from reprlib import recursive_repr as _recursive_repr
 
@@ -100,24 +102,26 @@ class SymTb(collections.OrderedDict):
         else:
             collections.OrderedDict.__setitem__(self, key, value)
 
+    def __str__(self):
+        return  f'''{','.join(list(map(lambda x: '_'.join([x[1][0].__repr__(),
+        x[0]]),filter(lambda x: x[0] , self.items())))) }'''
+
     @_recursive_repr()
     def __repr__(self):
         'od.__repr__() <==> repr(od)'
         if not self:
-            return '%s()' % (self.__class__.__name__,)
-        n = self.__class__.__name__
-        l = list(filter(lambda x: bool(x[0]),
-                    map(lambda x: (x[0],) + x[1] ,
-                               # if not x[1].t.__repr__().startswith(n) else
-                               # (x[0],) + ('record', x[1][1], x[1][2]),
-                                self.items())))
-        return '%s(%r)' % (n,l)
+            return 'SymT()'
+        l = ',  '.join(list(
+                    map(lambda x: f"""{'-'.join([x[0], x[1].__repr__()])}""",
+                     filter(lambda x: x[0], self.items()))))
+        return 'SymT(%s)' % (l)
+
+    #@property
+    #def t(self):
+    #    return 'Syms'
 
     @property
-    def t(self):
-        return 'Syms'
-
-    def offset(self):
+    def w(self):
         item = self[next(reversed(self))]
         return item.w+item.f
 
@@ -128,10 +132,15 @@ class SymTb(collections.OrderedDict):
             raise KeyError('Not declared variable: {key}')
 
 Type = collections.namedtuple('Type', 't w')
-#Type.__repr__=lambda self: self.t.__str__()+f'<{self.w}>'
+Type.__str__=lambda self: \
+    self.t if isinstance(self.t, str) else \
+    re.sub(r'^([^[]+)',f'\\1[{self.w//self.t.w}]', self.t.__str__()) if \
+    isinstance(self.t, Type) else self.t.__str__()
+Type.__repr__=lambda self: self.__str__()
 
-Sym = collections.namedtuple('S', 't w f', defaults=['',0,0])
-newEnv = lambda : SymTb({'': Sym()})
+Entry = collections.namedtuple('Entry', 't w f', defaults=['',0,0])
+Entry.__repr__ = lambda self: f'{self.t}-{self.w}-{self.f}'
+newEnv = lambda : SymTb({'': Entry()})
 
 def init():
     global code, symbol_table, environ, allabels, templabels
