@@ -6,10 +6,14 @@ stmts
     | {{ Nx=new_label() }} stmt
 
 stmt
-  :== if_else_stmt
+  :== if_else_stmt  {{gen({0}.Nx)}}
     | declare
     | NODE         {{ gen({1}.val) }}
     | assignment_expression
+    | '{' stmts '}'
+    | '{' '}'
+    | while_stmt
+
 
 if_else_stmt
   :== if_clause
@@ -18,18 +22,28 @@ if_else_stmt
 if_clause
   :== 'if' '('  {{ L1 = new_label() }}
       test ')'
-      NODE
       {{ Nx={0}.Nx; L1={3}.L1; tmp = 'if ! '+{4}.true+' goto '+L1;
+         gen(tmp);
+       }}
+      stmt
+      {{
+         gen('goto', {0}.Nx); gen('label', {3}.L1);
+         Nx = {0}.Nx;
       }}
 
 else_clause
-  :== 'else'
-      {{Nx={0}.Nx;g='goto '+{0}.Nx; l='label '; l1=l+{0}.L1; l2=l+{0}.Nx;
-        gen(g,l1, l2)}}
-      stmt
+  :== 'else' {{ Nx = {0}.Nx }} stmt
 
 test
   :== NUMBER COMP NUMBER   {{ true=' '.join([{1}.val, {2}.val, {3}.val]) }}
+
+while_stmt
+  :== 'while' '(' {{begin = new_label(); gen('label',begin); }} test ')'
+      {{ Nx={0}.Nx;  tmp = 'if ! '+{4}.true+' goto '+Nx;
+         gen(tmp);
+       }}
+       stmt
+            {{ gen('goto', {3}.begin); gen('label', {0}.Nx)}}
 
 declare
   :== declare type ID ';'
@@ -58,6 +72,7 @@ component
   :== '[' NUMBER ']'  {{ bt={0}.tp; tp=Type(bt, bt.w*int({2}.val)) }}
     | '[' NUMBER ']' {{tp={0}.tp}} component
       {{ bt={5}.tp; v=int({2}.val); tp=Type(bt, bt.w*v) }}
+
 assignment_expression
   :== ID '=' expression ';'
       {{ gen(environ.getsym({1}.val), '=', {3}.addr) }}

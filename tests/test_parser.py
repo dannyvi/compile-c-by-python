@@ -32,6 +32,12 @@ def test_if_else():
     translation = parser.parse_stream('if (2<9) S2 else if (2<3) stmts')
     print(translation[0])
 
+    print('parsing -----if ...................\n')
+    stream = ''' if ( 10 < 9) S2 else if ( 6 < 3 ) S1 else 
+                 if (3 < 9) stmts else S2'''
+    translation = parser.parse_stream(stream)
+    print(translation[0])
+
 
 def test_declaration():
     print("\nparsing ---------- int a; \n")
@@ -93,3 +99,12 @@ def test_expression():
     stream = ' int[3][5] k; int[6] m; b = k[2][1] + m[3]; '
     with pytest.raises(KeyError):
         translation, symbol_table = parser.parse_stream(stream)
+
+
+def test_while():
+    parser = Parser()
+
+    print("\nparsing ---------- while ( 2 < 9 ) { int a; a = 2+4; }")
+    stream = "while ( 2 < 9 ) { int a; a = 2+4; }"
+    translation, symbol_table = parser.parse_stream(stream)
+    print(translation, symbol_table)
