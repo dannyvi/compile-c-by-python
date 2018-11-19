@@ -1,11 +1,11 @@
-from compire.parser import Parser
+from compfly.parser import Parser
 import os
 import pytest
 
 
 gram_filename = os.path.dirname(
     os.path.dirname(
-        os.path.abspath(__file__))) + '/compire/gram/a.grammar'
+        os.path.abspath(__file__))) + '/compfly/gram/a.grammar'
 
 
 def test_start():

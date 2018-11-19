@@ -167,7 +167,7 @@ def load_grammar(grammar_file):
 
     For example::
 
-        from compire.parse.loader import load_grammar
+        from compfly.parse.loader import load_grammar
         gram_file = "a.grammar"      # the file with correct path needed
         grammar, symbols, env = load_grammar(gram_file)
 

@@ -42,8 +42,7 @@ while_stmt
       {{ Nx={0}.Nx;  tmp = 'if ! '+{4}.true+' goto '+Nx;
          gen(tmp);
        }}
-       stmt
-            {{ gen('goto', {3}.begin); gen('label', {0}.Nx)}}
+      stmt  {{ gen('goto', {3}.begin); gen('label', {0}.Nx)}}
 
 declare
   :== declare type ID ';'

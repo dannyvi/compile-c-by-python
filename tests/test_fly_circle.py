@@ -1,14 +1,12 @@
-from compire.parse.loader import load_grammar
-from compire.parse.table import closure_collection, gen_syntax_table
-from compire.parse.sdt import SDT
-from compire.parse.atoms import NTerm, Term
-from compire.lexer import Lexer
-from compire.parser import Parser
+from compfly.parse.loader import load_grammar
+from compfly.parse.table import closure_collection, gen_syntax_table
+from compfly.parse.sdt import SDT
+from compfly.lexer import Lexer
 import os
 
 
 gram_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             'nullable.grammar')
+                             'circle.grammar')
 
 
 def test_start():
@@ -19,11 +17,12 @@ def test_start():
 def test_productions():
     print("test productions\n\n")
     a = load_grammar(gram_filename)
-    grammar, symbols, env = a
-    print(symbols)
+    grammar, all_symbols, env = a
     for i in grammar:
         body = ('{} '*len(i.body)).format(*i.body)
         print(f"{i.head} -> {body}")
+    g = closure_collection(grammar, all_symbols)
+    print(g)
 
 
 def test_grammars():
@@ -41,3 +40,13 @@ def test_grammars():
         print(s.format(*_state))
 
 
+def test_reduction():
+    print("\n")
+    sdt = SDT.from_gram(gram_filename)
+    lexer = Lexer()
+    t = lexer.tokenize("c b c b")
+    print(list(t))
+
+    token_stream = lexer.tokenize("d e d b d e d b")
+
+    sdt.parse(token_stream)

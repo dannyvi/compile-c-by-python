@@ -1,4 +1,4 @@
-from compire.lexer import Token, load_lex, Lexer
+from compfly.lexer import Token, load_lex, Lexer
 import pytest
 
 
@@ -12,7 +12,7 @@ def test_Token():
 
 
 def test_load_lex():
-    f = load_lex("compire/gram/a.lexeme")
+    f = load_lex("compfly/gram/a.lexeme")
     print(f)
 
 

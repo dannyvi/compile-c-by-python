@@ -1,4 +1,4 @@
-from compire.lexer import Token
+from compfly.lexer import Token
 from .atoms import Term, Value, Null, Code
 from .loader import load_grammar
 from .table import gen_syntax_table

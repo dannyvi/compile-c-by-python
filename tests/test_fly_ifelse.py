@@ -1,7 +1,7 @@
-from compire.parse.loader import load_grammar
-from compire.parse.table import closure_collection, gen_syntax_table
-from compire.parse.sdt import SDT
-from compire.lexer import Lexer
+from compfly.parse.loader import load_grammar
+from compfly.parse.table import closure_collection, gen_syntax_table
+from compfly.parse.sdt import SDT
+from compfly.lexer import Lexer
 import os
 
 

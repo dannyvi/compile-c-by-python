@@ -1,0 +1,11 @@
+NUMBER      :=  r'\d+(\.\d*)?'    # numbers
+OP          :=  r'[\+*-]'
+ASSIGN      :=  r'='
+NODE        :=  r'S1|S2|C|stmts'
+ID          :=  r'[A-Za-z_][A-Za-z0-9_]*'
+DELIMITER   :=  r'[(),;\[\]]'
+NEWLINE     :=  r'\n'
+SKIP        :=  r'[ \t]+'
+MISMATCH    :=  r'.'
+
+# comments

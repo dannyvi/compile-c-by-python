@@ -1,8 +1,8 @@
-from compire.parse.loader import load_grammar
-from compire.parse.table import closure_collection, gen_syntax_table
-from compire.parse.sdt import SDT
-from compire.lexer import Lexer
-from compire.parse import Code
+from compfly.parse.loader import load_grammar
+from compfly.parse.table import closure_collection, gen_syntax_table
+from compfly.parse.sdt import SDT
+from compfly.lexer import Lexer
+from compfly.parse import Code
 import os
 import pytest
 
@@ -10,7 +10,7 @@ lexer = Lexer()
 
 gram_filename = os.path.dirname(
     os.path.dirname(
-        os.path.abspath(__file__))) + '/compire/gram/a.grammar'
+        os.path.abspath(__file__))) + '/compfly/gram/a.grammar'
 
 
 def test_start():

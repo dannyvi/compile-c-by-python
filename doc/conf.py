@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'compire'
+project = 'compfly'
 copyright = '2018, DannyVi'
 author = 'DannyVi'
 
@@ -150,7 +150,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'compire.tex', 'compire Documentation',
+    (master_doc, 'compfly.tex', 'compfly Documentation',
      'DannyVi', 'manual'),
 ]
 
@@ -160,7 +160,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'compire', 'compire Documentation',
+    (master_doc, 'compfly', 'compfly Documentation',
      [author], 1)
 ]
 
@@ -171,8 +171,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'compire', 'compire Documentation',
-     author, 'compire', 'One line description of project.',
+    (master_doc, 'compfly', 'compfly Documentation',
+     author, 'compfly', 'One line description of project.',
      'Miscellaneous'),
 ]
 

@@ -1,4 +1,4 @@
-from compire.parse.atoms import Production, NTerm, Term, Value
+from compfly.parse.atoms import Production, NTerm, Term, Value
 
 
 def rule():

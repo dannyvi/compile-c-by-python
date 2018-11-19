@@ -13,6 +13,7 @@ Welcome to compire's documentation!
    record
    changes
    ref/index
+   ir_documentation
 
 Diagram
 -------------------

@@ -26,7 +26,7 @@ so not quite often used.
 
 For example::
 
-    from compire.parse.loader import load_grammar
+    from compfly.parse.loader import load_grammar
     gram_file = "a.grammar"      # the file with correct path needed
     grammar, symbols, env = load_grammar(gram_file)
 
@@ -34,19 +34,19 @@ For example::
 Then, table would generate a **Parsing Table** by obtaining Grammar List and
 Symbols from the loader::
 
-    from compire.parse.table import gen_syntax_table
+    from compfly.parse.table import gen_syntax_table
     table = gen_syntax_table(grammar, symbols):
 
 At last, the **SDT** was constructed with the symbols, grammar list, and the
 parsing table::
 
-    from compire.parse.sdt import SDT
+    from compfly.parse.sdt import SDT
     sdt = SDT()
     sdt.load_grammar(gram_file)
 
 Or simply from grammar file::
 
-    from compire.parse.sdt import SDT
+    from compfly.parse.sdt import SDT
     sdt = SDT.from_gram(gram_file)
 
 

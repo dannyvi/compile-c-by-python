@@ -1,4 +1,4 @@
-from compire.parse.loader import *
+from compfly.parse.loader import *
 import os
 
 code = """start       :== stmt                                {{start}}
@@ -62,7 +62,7 @@ class TestClass:
 def test_a_grammar():
     gram_filename = os.path.dirname(
         os.path.dirname(
-            os.path.abspath(__file__))) + '/compire/gram/a.grammar'
+            os.path.abspath(__file__))) + '/compfly/gram/a.grammar'
     grammar, syms, env = load_grammar(gram_filename)
     for i in grammar:
         print(i)
