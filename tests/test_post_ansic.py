@@ -15,6 +15,13 @@ lex_filename = os.path.dirname(
     os.path.dirname(
         os.path.abspath(__file__))) + '/compost/gram/ansic.lexeme'
 
+def test_nterms():
+    print("test productions\n\n")
+    t = time.time()
+    a = load_grammar(gram_filename)
+    grammar, all_symbols, env = a
+    print(all_symbols)
+    print(len(all_symbols))
 
 def test_productions():
     print("test productions\n\n")

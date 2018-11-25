@@ -1,6 +1,5 @@
 import queue
 from typing import Set
-
 from .atoms import NTerm, Term, Value, Null
 
 
@@ -84,7 +83,6 @@ def first(symbol, grammar):
     elif isinstance(symbol, NTerm):
         if symbol.nullable:
             result = result.union([Null()])
-        r = map(lambda x: x if i.head == symbol else set(), grammar)
         g = [x for x in grammar if x.head == symbol]
         for i in g:
             null, current = True, 0
