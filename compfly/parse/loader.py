@@ -171,7 +171,7 @@ def load_grammar(grammar_file):
         gram_file = "a.grammar"      # the file with correct path needed
         grammar, symbols, env = load_grammar(gram_file)
 
-    :param grammar_file: grammar rules in *.grammar file.
+    :param grammar_file: grammar rules in \*.grammar file.
     :return: a tuple contains a grammar list, a symbols list, and an env.
     """
 

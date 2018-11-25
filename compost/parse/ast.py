@@ -15,6 +15,11 @@ class Variable(Expr):
     def __init__(self, name):
         self.name = name
 
+class Decl(Expr):
+    def __init__(self, typ, name):
+        self.typ = typ
+        self.name = name
+
 
 class Binary(Expr):
     def __init__(self, op, lhs, rhs):
@@ -30,9 +35,10 @@ class Call(Expr):
 
 
 class Prototype(Node):
-    def __init__(self, name, argnames):
+    def __init__(self, typ, name, args):
+        self.typ = typ
         self.name = name
-        self.argnames = argnames
+        self.args = args
 
 
 class Function(Node):
@@ -43,10 +49,10 @@ class Function(Node):
     _anonymous_function_counter = 0
 
     @classmethod
-    def create_anonymous(cls, expr):
+    def create_anonymous(cls, typ, expr):
         cls._anonymous_function_counter += 1
         return cls(
-            Prototype('_anon{0}'.format(cls._anonymous_function_counter), []),
+            Prototype(typ, '_anon{0}'.format(cls._anonymous_function_counter), []),
             expr
         )
 

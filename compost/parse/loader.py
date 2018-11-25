@@ -48,8 +48,8 @@ def strip_comments(stream):
 
 
 def separate_productions(code):
-    parts = r'(?s)(?P<NTerm>\w+)\s*:==\s*(?P<Units>.+?}})'
-    tail = r'\s*?(?:$|(?:\n\s*(?:(?=\w)|(?P<Epsilon>\|)\s*?\n)))'
+    parts = r'(?s)(?P<NTerm>[\w-]+)\s*:==\s*(?P<Units>.+?}})'
+    tail = r'\s*?(?:$|(?:\n\s*(?:(?=[\w-])|(?P<Epsilon>\|)\s*?\n)))'
     pattern = parts + tail
     productions = re.finditer(pattern, code)
     return list(productions)
@@ -74,8 +74,8 @@ def grammar_unit_iter(grammar_code):
             r"(?P<Seperate>\|)",
             r"(?P<Spaces>\s+)",
             r"(?P<quote>[\"'])(?P<Value>\S+)(?P=quote)",
-            r"(?P<Term>\w+)",
-            r"(?P<Rule>{{\w+}})",
+            r"(?P<Term>[\w-]+)",
+            r"(?P<Rule>{{[\w-]+}})",
             ]
     pattern = "|".join(spec)
     return re.finditer(pattern, grammar_code)
@@ -109,16 +109,16 @@ def get_single_production(prod_iter, n_terms, env):
     head = prod_iter.group("NTerm")
     units = prod_iter.group("Units")
     # 1. separate production body by '|'
-    bodies = re.split(r"\|", units)
+    bodies = re.split(r"\s\|\s", units)
     productions = []
     for body in bodies:
         # 2. separate formula and rule
-        rule = re.search(r'{{(\w+)}}', body).group(1)
-        formstr = re.sub(r'\s*{{(\w+)}}', '', body)
+        rule = re.search(r'{{([\w-]+)}}', body).group(1)
+        formstr = re.sub(r'\s*{{([\w-]+)}}', '', body)
         # 3. get every symbol
         spec = [r"(?P<Spaces>\s+)",
                 r"(?P<quote>[\"'])(?P<Value>\S+)(?P=quote)",
-                r"(?P<Term_NTerm>\w+)"]
+                r"(?P<Term_NTerm>[\w-]+)"]
         pattern = "|".join(spec)
         formlist = []
         for symbol in re.finditer(pattern, formstr):

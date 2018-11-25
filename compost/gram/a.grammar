@@ -1,12 +1,31 @@
-start      :== stmts                                {{start}}
+start      :== unit                                 {{start}}
+
+unit
+  :== ex_declare                                    {{unit1}}
+
+ex_declare
+  :== func_def                                      {{ex_declare1}}
+    | expr                                          {{ex_declare2}}
+
+func_def
+  :== proto compound_stmt                           {{func_def}}
+
+proto
+  :== decl '(' parameters ')'                       {{proto}}
+
+parameters
+  :== decl                                          {{parameters1}}
+    | parameters ',' decl                           {{parameters2}}
+
+compound_stmt
+  :== '{' stmts '}'                                 {{cpd_stmt1}}
+
 stmts
   :== stmts stmt                                    {{stmts1}}
     | stmt                                          {{stmts2}}
+
 stmt
-  :== "if" "(" "C" ")"
-               "S1" "else"
-                "stmts"
-                                                    {{stmt1}}
+  :== "if" "(" "C" ")" "S1" "else" "stmts"          {{stmt1}}
     | "if" "(" "C" ")" "S1"                         {{stmt2}}
     | declare                                       {{stmt3}}
     | expr                                          {{stmt4}}
@@ -15,15 +34,23 @@ expr
   :== expr OP expr                                  {{expr1}}
     | '(' expr ')'                                  {{expr2}}
     | NUMBER                                        {{expr3}}
+    | ID                                            {{expr5}}
+    | ID '(' expr ')'                                 {{expr4}}
 
 declare
-  :== type ID ";"                                   {{declare}}
+  :== decl ";"                                      {{declare}}
+
+decl
+  :== type ID                                       {{decl}}
+
 type
   :== base                                          {{type1}}
     | base composit                                 {{type2}}
+
 base
   :== "int"                                         {{base1}}
     | "float"                                       {{base2}}
+
 composit
   :== "[" NUMBER "]"                                {{composit1}}
     | "[" NUMBER "]"  composit                      {{composit2}}
@@ -32,6 +59,7 @@ composit
 
 import collections
 from compost.parse import ast
+import llvmlite.ir as ir
 
 all_labels = []
 
@@ -51,16 +79,34 @@ def get_label():
 def start(node):
     return node
 
+def unit1(node):
+    return node
 
-def stmts1(stmts_cb, stmt_cb):
-    def callback():
-        s = stmts_cb()
-        end_label = get_label()
-        inh = Prop()
-        inh.next_label = end_label
-        trans = s + stmt_cb(inh)
-        return trans
-    return callback
+def ex_declare1(node):
+    return node
+
+def ex_declare2(node):
+    return ast.Function.create_anonymous(ir.IntType(32), node)
+
+def func_def(proto, stmt):
+    proto = proto
+    body = stmt
+    return ast.Function(proto, body)
+
+def proto(decl, LPAR, paras, RPAR):
+    return ast.Prototype(decl.typ, decl.name, paras)
+
+def parameters1(decl):
+    return [decl,]
+
+def parameters2(paras, COMMA, decl):
+    return paras.append(decl)
+
+def cpd_stmt1(LCUR, stmts, RCUR):
+    return stmts
+
+def stmts1(nodes, node):
+    return node
 
 def stmts2(node):
     return node
@@ -109,11 +155,11 @@ def declare(_type, _id, end):
         return ''
     return callback
 
+def decl(typ, token):
+    return ast.Decl(typ, token.value)
+
 def type1(base):
-    syn = Prop()
-    syn.name = base.name
-    syn.width = base.width
-    return syn
+    return base
 
 def type2(base, composit):
     syn = Prop()
@@ -122,16 +168,10 @@ def type2(base, composit):
     return syn
 
 def base1(integer):
-    syn = Prop()
-    syn.name = 'int'
-    syn.width = 4
-    return syn
+    return ir.IntType(32)
 
 def base2(_float):
-    syn = Prop()
-    syn.name = 'float'
-    syn.width = 4
-    return syn
+    return ir.FloatType(32)
 
 def composit1(LPAR, number, RPAR):
     pass
@@ -149,3 +189,9 @@ def expr2(LPAR, expr, RPAR):
 
 def expr3(number):
     return ast.Number(number.value)
+
+def expr4(name, LPAR, arg, RPAR):
+    return ast.Call(name.value, [arg,])
+
+def expr5(name):
+    return ast.Variable(name.value)

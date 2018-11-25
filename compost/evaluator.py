@@ -1,7 +1,9 @@
 import llvmlite.binding as llvm
-from ctypes import CFUNCTYPE, c_double
+from ctypes import CFUNCTYPE, c_int32
 
 from .generator import LLVMCodeGenerator
+from .parser import Parser
+from .parse import ast as astree
 
 
 class Evaluator:
@@ -9,19 +11,20 @@ class Evaluator:
         llvm.initialize()
         llvm.initialize_native_target()
         llvm.initialize_native_asmparser()
+        llvm.initialize_native_asmprinter()
 
         self.generator = LLVMCodeGenerator()
         self.target = llvm.Target.from_default_triple()
 
     def evaluate(self, codestr, optimize=True, llvmdump=False):
-        ast = Parser().parse_toplevel(codestr)
+        ast, _ = Parser().parse_stream(codestr)
         self.generator.generate_code(ast)
 
         if llvmdump:
             print('========= Unoptimized LLVM IR')
             print(str(self.generator.module))
 
-        if not (isinstance(ast, Function) and ast.is_anonymous()):
+        if not (isinstance(ast, astree.Function) and ast.is_anonymous()):
             return None
 
         llvmmod = llvm.parse_assembly(str(self.generator.module))
@@ -45,7 +48,7 @@ class Evaluator:
                 print('========== Michine code')
                 print(target_machine.emit_assembly(llvmmod))
 
-            fptr = CFUNCTYPE(c_double)(ee.get_function_address(ast.proto.name))
+            fptr = CFUNCTYPE(c_int32)(ee.get_function_address(ast.proto.name))
 
-            result = fptr()
+            result = fptr(1)
             return result

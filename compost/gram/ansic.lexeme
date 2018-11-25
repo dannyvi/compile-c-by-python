@@ -1,0 +1,18 @@
+FLOAT_CONSTANT   :=  r'\d+\.\d*'    # numbers
+INTEGER_CONSTANT :=  r'\d+'    # numbers
+CHARACTER_CONSTANT := r'".+?"'
+ASSIGN_OP   :=  r'\|=|^=|&=|>>=|<<=|-=|+=|%=|/=|*='
+EXPR_OP     :=  r'\|\||&&|==|!=|<=|>=|<<|>>|++|--|->|\.|^|<|>|/|%'
+UNARY_OP    :=  r'&|*|+|-|~|!'
+ASSIGN      :=  r'='
+STORAGE_CLASS_SPECIFIER := r'auto|register|static|extern|typedef'
+TYPE_SPECIFIER := r'void|char|short|int|long|float|double|signed|unsigned'
+TYPE_QUALIFIER := r'const|volatile'
+STRUCT_OR_UNION := r'struct|union'
+ID          :=  r'[A-Za-z_][A-Za-z0-9_]*'
+DELIMITER   :=  r'[(),;\[\]{}]'
+NEWLINE     :=  r'\n'
+SKIP        :=  r'[ \t]+'
+MISMATCH    :=  r'.'
+
+# comments

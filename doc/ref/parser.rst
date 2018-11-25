@@ -5,11 +5,11 @@ Parser
 parse
 ---------
 
-.. automodule:: compire.parse
+.. automodule:: compfly.parse
     :members:
 
 loader
 ---------
 
-.. automodule:: compire.parse.loader
+.. automodule:: compfly.parse.loader
     :members:

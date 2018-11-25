@@ -1,24 +1,24 @@
+import os
 from compost.parse.loader import load_grammar
 from compost.parse.table import closure_collection, gen_syntax_table
 from compost.parse.sdt import SDT
 from compost.lexer import Lexer
-import os
-import pytest
+import time
+#from compost.parser import Parser
 
-lexer = Lexer()
 
 gram_filename = os.path.dirname(
     os.path.dirname(
-        os.path.abspath(__file__))) + '/compost/gram/a.grammar'
+        os.path.abspath(__file__))) + '/compost/gram/ansic.grammar'
 
-
-def test_start():
-    deps = '-' * 50
-    print("\n{}Parse{}".format(deps, deps))
+lex_filename = os.path.dirname(
+    os.path.dirname(
+        os.path.abspath(__file__))) + '/compost/gram/ansic.lexeme'
 
 
 def test_productions():
     print("test productions\n\n")
+    t = time.time()
     a = load_grammar(gram_filename)
     grammar, all_symbols, env = a
     g = closure_collection(grammar, all_symbols)
@@ -29,10 +29,13 @@ def test_productions():
         body = i.body #('{} \n'*len(i.body)).format(*i.body)
         # if isinstance()
         print(f"{n} {i.head} -> {body} ")
+    now = time.time() - t
+    print(now)
 
 
 def test_grammars():
     print("\n")
+    t = time.time()
     a = load_grammar(gram_filename)
     grammar, syms, env = a
     _state_map = gen_syntax_table(grammar, syms)
@@ -42,37 +45,8 @@ def test_grammars():
     for j, i in enumerate(_state_map):
         _state = [str(j), ] + i
         print(s.format(*_state))
+    now = time.time() - t
+    print(now)
 
-
-def test_error():
-    print(f"testing-error{'.'*60}\n")
-    token_stream = lexer.tokenize('if ( D S1 else S2 int a; \n int b;')
-    sdt = SDT.from_gram(gram_filename)
-    with pytest.raises(SyntaxError):
-        t, e = sdt.parse(token_stream)
-
-
-def test_if_else():
-    print(f"testing-if-else{'.'*60}\n")
-    token_stream = lexer.tokenize('if ( C ) S1 else stmts int a; int b;')
-    sdt = SDT.from_gram(gram_filename)
-    t, e = sdt.parse(token_stream)
-    print("translations\n")
-    print(t)
-
-
-def test_declaration():
-    print("\n")
-    token_stream = lexer.tokenize('int a; int b; float c; if ( C ) S1 else stmts ')
-    sdt = SDT.from_gram(gram_filename)
-    t,e = sdt.parse(token_stream)
-    print(t)
-
-
-def test_expr():
-    print("\n")
-    token_stream = lexer.tokenize(' 3 + 5')
-    sdt = SDT.from_gram(gram_filename)
-    t,e = sdt.parse(token_stream)
-    print(t)
-
+#def test_expression():
+#    parser = Parser(lex_filename, gram_filename)

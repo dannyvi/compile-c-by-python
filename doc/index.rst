@@ -14,6 +14,7 @@ Welcome to compire's documentation!
    changes
    ref/index
    ir_documentation
+   c_production_globs
 
 Diagram
 -------------------
