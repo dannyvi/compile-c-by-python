@@ -1,7 +1,13 @@
 import queue
 from typing import Set
 from .atoms import NTerm, Term, Value, Null
+import time
+import logging
 
+logging.getLogger().addHandler(logging.StreamHandler())
+
+
+closure_maps = {}
 
 class Item(object):
     """The Canonical LR(1) Item definition.
@@ -112,27 +118,31 @@ def get_closure(cl, grammar, label):
 
     The implied Items are the productions of the None terminals after the
     current position, which put a dot on the head."""
-    itemset = set()
-    q = queue.Queue()
-    for i in cl.sets:
-        itemset.add(i)
-        q.put(i)
-    while not q.empty():
-        item = q.get()
-        p, b = item.pos, item.body
-        symbol = b[p] if p < len(b) and isinstance(b[p], NTerm) else None
-        if symbol:
-            prods = [i for i in grammar if i.head == symbol]
-            suffix = item.body[item.pos+1:] + tuple([item.follow])
-            terminals = firsts(suffix, grammar)
-            for d in prods:
-                for t in terminals:
-                    newitem = Item(symbol, d.body, 0, t)
-                    if newitem not in itemset:
-                        itemset.add(newitem)
-                        q.put(newitem)
-    c = Closure(itemset, label)
-    return c
+    if cl in closure_maps.keys():
+        return closure_maps[cl]
+    else:
+        itemset = set()
+        q = queue.Queue()
+        for i in cl.sets:
+            itemset.add(i)
+            q.put(i)
+        while not q.empty():
+            item = q.get()
+            p, b = item.pos, item.body
+            symbol = b[p] if p < len(b) and isinstance(b[p], NTerm) else None
+            if symbol:
+                prods = [i for i in grammar if i.head == symbol]
+                suffix = item.body[item.pos+1:] + tuple([item.follow])
+                terminals = firsts(suffix, grammar)
+                for d in prods:
+                    for t in terminals:
+                        newitem = Item(symbol, d.body, 0, t)
+                        if newitem not in itemset:
+                            itemset.add(newitem)
+                            q.put(newitem)
+        c = Closure(itemset, label)
+        closure_maps.update({cl:c})
+        return c
 
 
 def goto(clos: Closure, token, grammar) -> Closure:
@@ -161,10 +171,26 @@ def closure_collection(grammar, symbols):
     q = queue.Queue()
     q.put(start)
     collection.add(start)
+    c_counter = 0
+    s_counter = 0
+    d_counter = 0
+    d1_counter = 0
+    block_total = 0.0
+    frac_total = 0.0
     while not q.empty():
         c = q.get()
         for literal in symbols:
+            then = time.time()
             goclos = goto(c, literal, grammar)
+            during = time.time() - then
+            if during > 0.1:
+                logging.warning(f"{c_counter!r} get_closure cost {during} {d_counter} ")
+                block_total += during
+                d_counter += 1
+            else:
+                logging.info(f"{c_counter!r} get_closure cost {during} {'-'*20}")
+                frac_total += during
+            then = time.time()
             if goclos:
                 if goclos not in collection:
                     label += 1
@@ -176,6 +202,16 @@ def closure_collection(grammar, symbols):
                     golabl = [i.label for i in collection if i == goclos]
                     if golabl:
                         c.goto[literal] = golabl[0]
+            during = time.time() - then
+            if during > 0.1:
+                logging.warning(f"{s_counter!r} collection stat cost {during} {d1_counter}")
+                d1_counter += 1
+            else:
+                logging.info(f"{s_counter!r} collection stat cost {during}")
+            c_counter += 1
+            s_counter += 1
+    print(f"block {block_total} frac {frac_total}")
+
     return collection
 
 

@@ -1,4 +1,5 @@
 import os
+from compost.parse.atoms import *
 from compost.parse.loader import load_grammar
 from compost.parse.table import closure_collection, gen_syntax_table
 from compost.parse.sdt import SDT
@@ -22,6 +23,9 @@ def test_nterms():
     grammar, all_symbols, env = a
     print(all_symbols)
     print(len(all_symbols))
+    print(len(list(filter(lambda x: isinstance(x, NTerm), all_symbols))))
+    print(len(list(filter(lambda x: isinstance(x, Term), all_symbols))))
+    print(len(list(filter(lambda x: isinstance(x, Value), all_symbols))))
 
 def test_productions():
     print("test productions\n\n")
@@ -29,9 +33,11 @@ def test_productions():
     a = load_grammar(gram_filename)
     grammar, all_symbols, env = a
     g = closure_collection(grammar, all_symbols)
-    for num in range(len(g)):
-        clos = [i for i in g if i.label == num][0]
-        print(clos.__repr__())
+    #for num in range(len(g)):
+    #    clos = [i for i in g if i.label == num][0]
+    #    print(clos.label, len(clos))
+    num = len(g)
+    print(num)
     for n, i in enumerate(grammar):
         body = i.body #('{} \n'*len(i.body)).format(*i.body)
         # if isinstance()

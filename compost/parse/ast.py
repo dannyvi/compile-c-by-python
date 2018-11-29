@@ -15,6 +15,7 @@ class Variable(Expr):
     def __init__(self, name):
         self.name = name
 
+
 class Decl(Expr):
     def __init__(self, typ, name):
         self.typ = typ
@@ -52,11 +53,10 @@ class Function(Node):
     def create_anonymous(cls, typ, expr):
         cls._anonymous_function_counter += 1
         return cls(
-            Prototype(typ, '_anon{0}'.format(cls._anonymous_function_counter), []),
+            Prototype(typ, '_anon{0}'.format(cls._anonymous_function_counter),
+                      []),
             expr
         )
 
     def is_anonymous(self):
         return self.proto.name.startswith('_anon')
-
-
