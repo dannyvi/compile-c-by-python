@@ -10,6 +10,10 @@
 #include "syntax_table.h"
 #include "tests.h"
 
+PyObject *classNT, *classT, *classV;
+
+
+
 static symbol pyobj_build_symbol(PyObject *NT, PyObject *T,
                                  PyObject* V, PyObject *instance) {
     PyObject *attr;

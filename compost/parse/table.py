@@ -8,6 +8,7 @@ logging.getLogger().addHandler(logging.StreamHandler())
 
 
 closure_maps = {}
+first_maps = {}
 
 class Item(object):
     """The Canonical LR(1) Item definition.
@@ -83,6 +84,8 @@ class Closure(object):
 
 def first(symbol, grammar):
     """Return the first terminal sets that may occur in the Symbol."""
+    if symbol in first_maps.keys():
+        return first_maps[symbol]
     result = set()
     if isinstance(symbol, (Term, Value)):
         return set([symbol])
@@ -99,6 +102,7 @@ def first(symbol, grammar):
                 if not isinstance(sym, NTerm) or not sym.nullable:
                     null = False
                 current += 1
+    first_maps.update({symbol:result})
     return result
 
 

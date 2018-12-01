@@ -17,8 +17,8 @@ typedef struct symbol {
 typedef union symbol_entry {
     unsigned char entry;
     struct {
-        unsigned char flag:2;   // symbol 0 is NTerm 2: Term, 3:Value.
-        unsigned char index:6;  // the index in the symbol_table.
+        unsigned char index:6;   // the index in the symbol_table.
+        unsigned char flag:2;  // symbol 0 is NTerm 2: Term, 3:Value.
     };
 } symbol_entry;
 

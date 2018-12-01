@@ -12,27 +12,30 @@
 #include "symbol.h"
 #include "syntax_table.h"
 
+int adds(int a, int b){
+    if (a==1) {return adds(b,b);}
+    else{return b+b;}
+}
 
 int tests (void) {
-    symbol sym[] = {{NTerm, "symbol1"},{NTerm, "symbol21"},
-                    {Term, "terminal-symbol-1"},{Value, "terminal2"},
-                    {Term, "terminal32456"}};
-    build_symbol_table(sym, sizeof(sym)/sizeof(symbol));
-    printf("%s\n%s\n%s\n%s\n%s\n", SymbolTable[0].name, SymbolTable[1].name,
-           SymbolTable[128].name, SymbolTable[192].name, SymbolTable[129].name);
-    SymbolEntry_print();
 
-    printf("\nLen:%d\n", SymbolEntry_len());
-    assert(SymbolTable[0].name[0]=='s');
-    assert(SymbolTable[1].name[0]=='s');
-    symbol_entry e = sentry_find(sym[4]);
-    printf("Entry: %d\n", e.entry);
+    printf("%d", adds(1,3));
+    symbol_entry syma[] = {{.entry=100}};
+    symbol_entry sym2 = {.entry=199};
+    symbol_sets * s = symbol_sets_create(syma, 1);
+    symbol_sets_add(sym2, s);
+    symbol_entry symb[] = {{.entry=101}};
+    symbol_sets * s2 = symbol_sets_create(symb, 1);
+    symbol_sets * s3 = union_symbol_sets(s, s2);
+    symbol_entry se = {.entry=12};
+    symbol_sets * n = first_sets(&se);
 
-    //production p = production_build(sym, 5);
-    //for (int i=0;i<5;i++){
-    //    printf("%d ", p.body[i].entry);
-    // }
-    printf("\nCTESTS_END\n");
+    while(n->next) {
+        printf("sets: %d\n", n->current.entry);
+        n = n->next;
+    }
+
+    printf("\nCTESTS_END\n\n");
     return 0;
 }
 

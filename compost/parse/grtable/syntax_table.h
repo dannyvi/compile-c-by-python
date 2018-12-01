@@ -13,8 +13,6 @@ extern "C" {
 #include <stdio.h>
 #include "symbol.h"
 
-//typedef unsigned char entry_select;
-
 typedef union production {
     long double pnum;
     struct {
@@ -22,34 +20,57 @@ typedef union production {
         symbol_entry dot;
         symbol_entry follow;
     } ;
-} production, item;
+} production, pitem;
 
-//production production_build(symbol*, size_t);
+typedef struct prod_list prod_list;
+ struct prod_list {
+    production current;
+    prod_list *next;
+} ;
+
 
 extern int GrammarCount;
 extern production *Grammar;
 
 void Grammar_init(size_t size);
-//void Grammar_build(production *, size_t);
+
 void Grammar_add(production);
 void Grammar_print(void);
 
-struct goto_list {
-    unsigned char sym_index;
-    struct collection_t *collection;
-    struct goto_list *next;
-};
+typedef struct goto_list {
+    symbol_entry sym_index;             // goto closure by this sym_index;
+    struct closure_t *closure;                 // goto closure;
+    struct goto_list *next;                    // the next goto item.
+} goto_list;
 
-struct collection_t {
+typedef struct closure_t {
     int label;
-    item *items;
+    //int length;
+    //int goto_length;
+    pitem *items;
     struct goto_list *go_to;
+}closure_t;
+
+typedef struct collection_chain {
+    closure_t c;
+    closure_t *next;
+}collection_chain;
+
+typedef struct symbol_sets symbol_sets;
+
+struct symbol_sets {
+    symbol_entry current;
+    symbol_sets *next;
 };
 
-struct collection_set {
-    struct collection_t c;
-    struct collection_t *next;
-};
+int entry_in_symbol_sets(symbol_entry, symbol_sets *);
+void symbol_sets_link(symbol_sets *, symbol_sets *);
+symbol_sets* union_symbol_sets(symbol_sets *seta, symbol_sets *setb);
+void symbol_sets_add(symbol_entry sym, symbol_sets * sets);
+symbol_sets * symbol_sets_create(symbol_entry syms[], size_t size);
+
+prod_list * get_productions(symbol_entry *sym);
+symbol_sets * first_sets(symbol_entry *);
 
 #ifdef __cplusplus
 }
