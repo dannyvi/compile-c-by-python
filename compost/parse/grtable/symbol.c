@@ -98,7 +98,7 @@ void SymbolTable_add(symbol sym) {
         if (!SymbolTable[i].name[0]){
             t += i * sizeof(symbol_table);
             strcpy(t, sym.name);
-            index.entry = (unsigned short) i;
+            index.entry = (unsigned char) i;
             SymbolEntry_push(index);
             return ;
         }
@@ -114,6 +114,7 @@ void build_symbol_table(symbol * symbols, size_t size) {
 }
 
 void SymbolTable_print(void) {
+    printf("all Symbols: (from %s)\n", __FILE__);
     for (int i=0;i<256;i++) {
         if (SymbolTable[i].name[0]){
             char *type;
@@ -123,4 +124,5 @@ void SymbolTable_print(void) {
             printf("%s %d : %s\n", type, i, SymbolTable[i].name);
         }
     }
+    printf("\n\n");
 }

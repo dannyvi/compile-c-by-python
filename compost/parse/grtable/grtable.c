@@ -7,26 +7,36 @@
 
 
 #include "symbol.h"
-#include "syntax_table.h"
+#include "grammar.h"
+#include "closure.h"
 #include "tests.h"
 
 PyObject *classNT, *classT, *classV;
 
+static PyObject* grtable_init_class(PyObject* self, PyObject* args){
+    PyObject *NT, *T, *V;
+    if (! PyArg_ParseTuple( args, "OOO", &NT, &T, &V )) {
+        return NULL;
+    }
+    classNT = NT;
+    classT = T;
+    classV = V;
+    Py_INCREF(Py_None);
+    return Py_None;
+}
 
-
-static symbol pyobj_build_symbol(PyObject *NT, PyObject *T,
-                                 PyObject* V, PyObject *instance) {
+static symbol pyobj_build_symbol(PyObject *instance) {
     PyObject *attr;
     Py_ssize_t  size;
     sym_type type=NTerm;
     const char * pr=" ";
     symbol sym;
 
-    if ( PyObject_IsInstance(instance, NT)){
+    if ( PyObject_IsInstance(instance, classNT)){
        type = NTerm;
-    } else if ( PyObject_IsInstance(instance, T)){
+    } else if ( PyObject_IsInstance(instance, classT)){
         type = Term;
-    } else if ( PyObject_IsInstance(instance, V)){
+    } else if ( PyObject_IsInstance(instance, classV)){
         type = Value;
     }
     if (PyObject_HasAttrString(instance, "symbol")){
@@ -38,34 +48,26 @@ static symbol pyobj_build_symbol(PyObject *NT, PyObject *T,
     return sym;
 }
 
-//This is the function that is called from your python code
 static PyObject* grtable_init_symbols(PyObject* self, PyObject* args)
 {
-    PyObject *listObj, *NT, *T, *V;
+    PyObject *listObj;
 
-    //The input arguments come as a tuple, we parse the args to get the various variables
-    //In this case it's only one list variable, which will now be referenced by listObj
-     if (! PyArg_ParseTuple( args, "OOOO", &NT, &T, &V, &listObj ))
+     if (! PyArg_ParseTuple( args, "O", &listObj ))
         {return NULL;}
 
-
-    //length of the list
     long length = PyList_Size(listObj);
     symbol syms[length];
-    //printf("\nLength:%ld\n\n", length);
-    //iterate over all the elements
+
     int i =0;
     for (i = 0; i < length; i++) {
-        //get an element out of the list - the element is also a python objects
         PyObject* temp = PyList_GetItem(listObj, i);
-        syms[i] = pyobj_build_symbol(NT, T, V, temp);
+        syms[i] = pyobj_build_symbol(temp);
     }
 
     build_symbol_table(syms, length);
-    //SymbolEntry_print();
+
     SymbolTable_print();
-    //value returned back to python code - another python object
-    //build value here converts the C long to a python integer
+
     Py_INCREF(Py_None);
     return Py_None;
 
@@ -84,13 +86,12 @@ static PyObject*  grtable_init_grammar(PyObject* self, PyObject* size){
     return Py_None;
 }
 
-static production* pyobj_build_production(PyObject *NT, PyObject *T, PyObject *V,
-                                         PyObject *prod ){
+static production* pyobj_build_production(PyObject *prod ){
     production *product = calloc(1, sizeof(production));
     long length = PyList_Size(prod);
     for (int i = 0; i < length; i++) {
         PyObject* temp = PyList_GetItem(prod, i);
-        symbol s = pyobj_build_symbol(NT, T, V, temp);
+        symbol s = pyobj_build_symbol(temp);
         symbol_entry e = sentry_find(s);
         product->body[i] = e;
     }
@@ -98,28 +99,16 @@ static production* pyobj_build_production(PyObject *NT, PyObject *T, PyObject *V
 }
 
 static PyObject*  grtable_build_grammar(PyObject* self, PyObject* PyProd){
-    PyObject *prod, *NT, *T, *V;
-    if (!PyArg_ParseTuple(PyProd, "OOOO", &NT, &T, &V, &prod)) {
+    PyObject *prod;
+    if (!PyArg_ParseTuple(PyProd, "O", &prod)) {
         return NULL;
     }
     long length = PyList_Size(prod);
     for (int i=0; i<length;i++){
         PyObject* p = PyList_GetItem(prod, i);
-        production *product = pyobj_build_production(NT, T, V, p);
+        production *product = pyobj_build_production(p);
         Grammar_add(*product);
     }
-    /*for (int i = 0; i < length; i++) {
-        PyObject* temp = PyList_GetItem(prod, i);
-
-        symbol s = pyobj_build_symbol(NT, T, V, temp);
-        symbol_entry e = sentry_find(s);
-        product->body[i] = e;
-    }*/
-    //printf("BUILDING production: ");
-    //for (int i=0;i<14;i++){
-    //    printf("%d ", product->body[i].entry);
-    // }
-    //printf("\n\n");
 
     Grammar_print();
 
@@ -133,6 +122,8 @@ static PyObject*  grtable_tests(PyObject* self, PyObject* obj){
     return Py_None;
 }
 
+static char grtable_init_class_docs[] =
+        "init the Nterm, Term, Value class reference.\n";
 
 static char grtable_init_symbols_docs[] =
         "add(  ): add all elements of the list\n";
@@ -147,6 +138,7 @@ static char grtable_build_gr_docs[] =
         "building_grammar.\n";
 
 static PyMethodDef module_methods[] = {
+        {"init_class", (PyCFunction)grtable_init_class, METH_VARARGS, grtable_init_class_docs},
         {"init_symbols", (PyCFunction)grtable_init_symbols, METH_VARARGS, grtable_init_symbols_docs},
         {"init_grammar", (PyCFunction)grtable_init_grammar, METH_VARARGS, grtable_init_gr_docs},
         {"build_grammar", (PyCFunction)grtable_build_grammar, METH_VARARGS, grtable_build_gr_docs},

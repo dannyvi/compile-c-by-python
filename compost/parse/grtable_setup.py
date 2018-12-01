@@ -4,6 +4,7 @@ setup(name='grtable',
       version='1.0',
       ext_modules=[Extension('grtable', ['grtable/grtable.c',
                                          'grtable/symbol.c',
-                                         'grtable/syntax_table.c',
+                                         'grtable/grammar.c',
+                                         'grtable/closure.c',
                                          'grtable/tests.c'])]
       )

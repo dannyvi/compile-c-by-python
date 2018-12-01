@@ -15,10 +15,11 @@ lex_filename = os.path.dirname(
 def test_nterms():
     print("test productions\n\n")
     grammar, all_symbols, env = load_grammar(gram_filename)
-    i = grtable.init_symbols(NTerm, Term, Value, all_symbols)
+    grtable.init_class(NTerm, Term, Value)
+    i = grtable.init_symbols(all_symbols)
     length = len(grammar)
     _grammar = list(map(lambda x: [x.head] + list(x.body), grammar))
     grtable.init_grammar(length)
-    grtable.build_grammar(NTerm, Term, Value, _grammar)
+    grtable.build_grammar(_grammar)
     grtable._tests()
 

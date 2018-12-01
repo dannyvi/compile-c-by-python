@@ -2,9 +2,8 @@
 // Created by DannyV on 2018-11-28.
 //
 
-
 #include <stdlib.h>
-#include "syntax_table.h"
+#include "grammar.h"
 
 production *Grammar;
 int GrammarCount = 0;
@@ -20,6 +19,7 @@ void Grammar_add(production prod){
 }
 
 void Grammar_print(void) {
+    printf("Grammar list: (from %s)\n", __FILE__);
     for (int i=0;i<GrammarCount;i++) {
         production p = Grammar[i];
         printf("Prd %d: ",i);
@@ -29,6 +29,7 @@ void Grammar_print(void) {
         }
         printf("\n");
     }
+    printf("\n\n");
 }
 
 int entry_in_symbol_sets(symbol_entry sym, symbol_sets *ss){
@@ -56,7 +57,6 @@ symbol_sets* union_symbol_sets(symbol_sets *seta, symbol_sets *setb){
     }
     symbol_sets *c = setb;
     while (c->next) {
-        //printf("CURRENT: %d", c->current.entry);
         if (entry_in_symbol_sets(c->current, seta)) {
                 c->current = c->next->current;
                 free(c->next);
@@ -85,10 +85,12 @@ void symbol_sets_add(symbol_entry sym, symbol_sets * sets){
         s->next = calloc(1, sizeof(symbol_sets));
     }
 }
+
 symbol_sets * new_symbol_sets(void) {
     symbol_sets *ss = calloc(1, sizeof(symbol_sets));
     return ss;
 }
+
 symbol_sets * symbol_sets_create(symbol_entry syms[], size_t size){
     symbol_sets *ss = calloc(1, sizeof(symbol_sets));
     symbol_sets *kk = ss;
@@ -100,9 +102,9 @@ symbol_sets * symbol_sets_create(symbol_entry syms[], size_t size){
     return kk;
 }
 
-void ss_print(char * header, symbol_sets * s) {
+void print_symbol_sets(char * header, symbol_sets * s) {
     symbol_sets *t = s;
-    printf("\n%s:", header);
+    printf("%s ", header);
     while(t->next){
         printf("%d ", t->current.entry);
         t = t-> next;
@@ -123,59 +125,4 @@ prod_list * get_productions(symbol_entry *sym){
         }
     }
     return result;
-}
-
-static symbol_sets * get_entry_headers(symbol_entry * sym) {
-    prod_list * pl = get_productions(sym);
-    symbol_sets *s = calloc(1, sizeof(symbol_sets));
-    while (pl->next) {
-        production p = pl->current;
-        symbol_entry sentry = p.body[1];
-        if (!s->next) {
-            symbol_sets_add(sentry, s);
-        } else {
-            if (!entry_in_symbol_sets(sentry, s)){
-                symbol_sets_add(sentry, s);
-            }
-        }
-        pl = pl->next;
-    }
-    return s;
-}
-
-symbol_sets * first_sets(symbol_entry * sym){
-    if (sym->flag != NTerm){
-        symbol_sets * s = symbol_sets_create(sym, 1);
-        return s;
-    }
-    else {
-        symbol_sets *sets, *queue,  *terms;
-        sets = new_symbol_sets();
-        terms = new_symbol_sets();
-
-        queue = symbol_sets_create(sym, 1);
-
-        while (queue->next) {
-            symbol_entry current = queue->current;
-            if (!sets || !entry_in_symbol_sets(current, sets)) {
-                symbol_sets_add(current, sets);
-                if (current.flag!=NTerm){
-                    if (!terms || !entry_in_symbol_sets(current, terms)){
-                        symbol_sets_add(current, terms);
-                    }
-                } else {
-                symbol_sets *headers = get_entry_headers(&current);
-                while(headers->next){
-                    if(!entry_in_symbol_sets(headers->current, sets)){
-                        symbol_sets_add(headers->current, queue);
-                    }
-                    free(headers);
-                    headers = headers->next;
-                }}
-            }
-            free(queue);
-            queue = queue->next;
-        }
-        return terms;
-    }
 }
