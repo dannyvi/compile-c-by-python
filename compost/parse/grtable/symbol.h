@@ -9,28 +9,30 @@
 
 typedef enum sym_type {NTerm=0, Term=2, Value=3} sym_type;
 
-typedef struct symbol {
+typedef struct symbol_t {
     sym_type type;
     char* name;
-} symbol;
+} symbol_t;
 
-typedef union symbol_entry {
+typedef union symbol_entry_t {
     unsigned char entry;
     struct {
         unsigned char index:6;   // the index in the symbol_table.
-        unsigned char flag:2;  // symbol 0 is NTerm 2: Term, 3:Value.
+        unsigned char flag:2;  // symbol_t 0 is NTerm 2: Term, 3:Value.
     };
-} symbol_entry;
+} symbol_entry_t;
 
-typedef struct symbol_entry_list {
-    symbol_entry s_entry;
-    struct symbol_entry_list *next;
-} symbol_entry_list;
 
-extern symbol_entry_list SymbolEntry;
+typedef struct symbol_entry_list_t symbol_entry_list_t;
+struct symbol_entry_list_t {
+    symbol_entry_t s_entry;
+    symbol_entry_list_t *next;
+};
+
+extern symbol_entry_list_t SymbolEntry;
 
 int SymbolEntry_len(void);
-void SymbolEntry_push(symbol_entry);
+void SymbolEntry_push(symbol_entry_t);
 void SymbolEntry_print(void);
 
 typedef struct symbol_table {
@@ -41,12 +43,12 @@ typedef struct symbol_table {
 // 0-127, NTerm; 128-191, Term. 192-255, Value.
 extern symbol_table SymbolTable[TBLEN];
 
-symbol symbol_create(sym_type type, char* name);
-symbol_entry sentry_find(symbol);
+symbol_t symbol_create(sym_type type, char* name);
+symbol_entry_t sentry_find(symbol_t);
 
-void SymbolTable_add(symbol sym);
+void SymbolTable_add(symbol_t sym);
 
-void build_symbol_table(symbol *symbols, size_t size);
+void build_symbol_table(symbol_t *symbols, size_t size);
 
 void SymbolTable_print(void);
 #endif //COMPY_SYMBOL_H

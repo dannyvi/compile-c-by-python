@@ -26,7 +26,6 @@ stmts
 
 stmt
   :== "if" "(" "C" ")" "S1" "else" "stmts"          {{stmt1}}
-    | "if" "(" "C" ")" "S1"                         {{stmt2}}
     | declare                                       {{stmt3}}
     | expr                                          {{stmt4}}
 

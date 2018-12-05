@@ -1,4 +1,3 @@
-import collections
 import itertools
 
 
@@ -29,9 +28,11 @@ class NTerm(Symbol):
 
     def __str__(self):
         if self.nullable:
-            return f"¡{self.symbol}¡"
+            return f"{self.symbol}"
+            # return f"¡{self.symbol}¡"
         else:
-            return f"⋮{self.symbol}⋮"
+            return f"{self.symbol}"
+            # return f"⋮{self.symbol}⋮"
 
     def nulloff(self):
         self.nullable = False
@@ -40,12 +41,14 @@ class NTerm(Symbol):
 
 class Term(Symbol):
     def __str__(self):
-        return f"∶{self.symbol}∶"
+        # return f"∶{self.symbol}∶"
+        return f"{self.symbol}"
 
 
 class Value(Symbol):
     def __str__(self):
-        return f"⋅{self.symbol}⋅"
+        # return f"⋅{self.symbol}⋅"
+        return f"{self.symbol}"
 
 
 class Null(Symbol):

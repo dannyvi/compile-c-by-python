@@ -13,47 +13,52 @@ extern "C" {
 #include <stdio.h>
 #include "symbol.h"
 
-typedef union production {
-    long double pnum;
+typedef union production_t {
+    __uint128_t pnum;
     struct {
-        symbol_entry body[14]; // body[0] is the head, body[1:14] is product
-        symbol_entry dot;
-        symbol_entry follow;
+        symbol_entry_t body[14]; // body[0] is the head, body[1:14] is product
+        symbol_entry_t dot;
+        symbol_entry_t follow;
     } ;
-} production, pitem;
+} production_t, pitem_t;
 
-typedef struct prod_list prod_list;
- struct prod_list {
-    production current;
-    prod_list *next;
+pitem_t * build_pitem_t(production_t *prod, symbol_entry_t pos, symbol_entry_t follow);
+
+typedef struct prod_list_t prod_list_t;
+ struct prod_list_t {
+    production_t current;
+    prod_list_t *next;
 } ;
 
 
 extern int GrammarCount;
-extern production *Grammar;
+extern production_t *Grammar;
 
 void Grammar_init(size_t size);
 
-void Grammar_add(production);
+void Grammar_add(production_t);
 void Grammar_print(void);
 
 
-typedef struct symbol_sets symbol_sets;
+typedef struct symbol_sets_t  symbol_sets_t ;
 
-struct symbol_sets {
-    symbol_entry current;
-    symbol_sets *next;
+struct symbol_sets_t  {
+    symbol_entry_t current;
+    symbol_sets_t  *next;
 };
 
-symbol_sets * new_symbol_sets(void) ;
-int entry_in_symbol_sets(symbol_entry, symbol_sets *);
-void symbol_sets_link(symbol_sets *, symbol_sets *);
-symbol_sets* union_symbol_sets(symbol_sets *seta, symbol_sets *setb);
-void symbol_sets_add(symbol_entry sym, symbol_sets * sets);
-symbol_sets * symbol_sets_create(symbol_entry syms[], size_t size);
-void print_symbol_sets(char * header, symbol_sets * s);
+symbol_sets_t  * new_symbol_sets(void) ;
+int entry_in_symbol_sets(symbol_entry_t, symbol_sets_t  *);
+void symbol_sets_link(symbol_sets_t  *, symbol_sets_t  *);
+symbol_sets_t * union_symbol_sets(symbol_sets_t  *seta, symbol_sets_t  *setb);
+void symbol_sets_add(symbol_entry_t sym, symbol_sets_t  * sets);
+symbol_sets_t  * symbol_sets_create(symbol_entry_t syms[], size_t size);
+void print_symbol_sets(char * header, symbol_sets_t  * s);
 
-prod_list * get_productions(symbol_entry *sym);
+prod_list_t * get_productions(symbol_entry_t *sym);
+
+void print_pitem_t(pitem_t *item);
+void print_pitem_t_str(pitem_t *item) ;
 
 #ifdef __cplusplus
 }

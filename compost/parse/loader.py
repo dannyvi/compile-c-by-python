@@ -1,5 +1,5 @@
 import re
-from functools import reduce
+
 from .atoms import Production, NTerm, Term, Value
 
 
@@ -184,8 +184,7 @@ def load_grammar(grammar_file):
         # 6. get terminals and terminal values list. And all symbols list
         terminals, term_values = get_terminals_values(pure_grammar, n_terminals)
 
-        symbols = term_values + terminals + n_terminals
-
+        symbols = n_terminals + terminals + term_values
         # 7. generate grammar list, contains production rules.
         #    Has to deal or productions and nullable productions.
 

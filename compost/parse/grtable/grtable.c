@@ -23,14 +23,15 @@ static PyObject* grtable_init_class(PyObject* self, PyObject* args){
     classV = V;
     Py_INCREF(Py_None);
     return Py_None;
+
 }
 
-static symbol pyobj_build_symbol(PyObject *instance) {
+symbol_t pyobj_build_symbol(PyObject *instance) {
     PyObject *attr;
     Py_ssize_t  size;
     sym_type type=NTerm;
     const char * pr=" ";
-    symbol sym;
+    symbol_t sym;
 
     if ( PyObject_IsInstance(instance, classNT)){
        type = NTerm;
@@ -56,7 +57,7 @@ static PyObject* grtable_init_symbols(PyObject* self, PyObject* args)
         {return NULL;}
 
     long length = PyList_Size(listObj);
-    symbol syms[length];
+    symbol_t syms[length];
 
     int i =0;
     for (i = 0; i < length; i++) {
@@ -78,7 +79,6 @@ static PyObject*  grtable_init_grammar(PyObject* self, PyObject* size){
     if (!PyArg_ParseTuple(size, "i", &m)) {
         return NULL;
     }
-
     printf("Init Grammar: %d\n", m);
     Grammar_init((size_t) m);
     printf("Count: %d\n", GrammarCount);
@@ -86,13 +86,13 @@ static PyObject*  grtable_init_grammar(PyObject* self, PyObject* size){
     return Py_None;
 }
 
-static production* pyobj_build_production(PyObject *prod ){
-    production *product = calloc(1, sizeof(production));
+production_t* pyobj_build_production_t(PyObject *prod ){
+    production_t *product = calloc(1, sizeof(production_t));
     long length = PyList_Size(prod);
     for (int i = 0; i < length; i++) {
         PyObject* temp = PyList_GetItem(prod, i);
-        symbol s = pyobj_build_symbol(temp);
-        symbol_entry e = sentry_find(s);
+        symbol_t s = pyobj_build_symbol(temp);
+        symbol_entry_t e = sentry_find(s);
         product->body[i] = e;
     }
     return product;
@@ -106,14 +106,66 @@ static PyObject*  grtable_build_grammar(PyObject* self, PyObject* PyProd){
     long length = PyList_Size(prod);
     for (int i=0; i<length;i++){
         PyObject* p = PyList_GetItem(prod, i);
-        production *product = pyobj_build_production(p);
+        production_t *product = pyobj_build_production_t(p);
         Grammar_add(*product);
     }
 
     Grammar_print();
 
+    init_NTFirst();
+    NTFirst_print();
+
     Py_INCREF(Py_None);
     return Py_None;
+}
+
+static PyObject* grtable_gen_syntax_table(PyObject* self, PyObject* obj) {
+    PyErr_Print();
+    col_chain_t * cc = closure_collection();
+    col_chain_t * c = cc;
+    int sym_size = SymbolEntry_len();
+    int length = 0;
+    while (cc->next) {
+        length += 1;
+        cc = cc->next;
+    }
+
+    state_action_t * states = get_states_map(c, length);
+    state_action_t *t = states;
+    Py_ssize_t len= 0;
+    PyObject *result = PyList_New(len);
+    char *str= calloc(20, sizeof(char));
+    for (int i=0; i<length; i++, t+=sym_size){
+        PyObject *listobj = PyList_New(len);
+        for (int j=0; j<sym_size; j++) {
+            memset(str, 0, 20);
+            if ((t+j)->act==ERROR) {
+                int strlen = snprintf( NULL, 0, "%s", "." );
+                snprintf( str, strlen + 1, "%s", "." );
+            }
+            else if ((t+j)->act==ACCEPT) {
+                int strlen = snprintf( NULL, 0, "%s", "$" );
+                snprintf( str, strlen + 1, "%s", "$" );
+            }
+            else if ((t+j)->act==NTACT) {
+                int strlen = snprintf( NULL, 0, "%d", (t+j)->state );
+                snprintf( str, strlen + 1, "%d", (t+j)->state );
+            }
+            else if ((t+j)->act==SHIFT) {
+                int strlen = snprintf( NULL, 0, "s%d", (t+j)->state );
+                snprintf( str, strlen + 1, "s%d", (t+j)->state );
+            }
+            else {
+                int strlen = snprintf( NULL, 0, "r%d", (t+j)->state );
+                snprintf( str, strlen + 1, "r%d", (t+j)->state );
+            }
+            PyObject * item = Py_BuildValue("s", str);
+            PyList_Append(listobj, item);
+        }
+        PyList_Append(result, listobj);
+    }
+    PyErr_Print();
+    return result;
 }
 
 static PyObject*  grtable_tests(PyObject* self, PyObject* obj){
@@ -129,7 +181,7 @@ static char grtable_init_symbols_docs[] =
         "add(  ): add all elements of the list\n";
 
 static char grtable_init_gr_docs[] =
-        "neccesarily init grammar before add productions.\n";
+        "neccesarily init grammar before add production_ts.\n";
 
 static char grtable_test_docs[] =
         "tests.\n";
@@ -137,11 +189,16 @@ static char grtable_test_docs[] =
 static char grtable_build_gr_docs[] =
         "building_grammar.\n";
 
+
+static char grtable_gen_syntax_table_docs[] =
+        "building_syntax_table.\n";
+
 static PyMethodDef module_methods[] = {
         {"init_class", (PyCFunction)grtable_init_class, METH_VARARGS, grtable_init_class_docs},
         {"init_symbols", (PyCFunction)grtable_init_symbols, METH_VARARGS, grtable_init_symbols_docs},
         {"init_grammar", (PyCFunction)grtable_init_grammar, METH_VARARGS, grtable_init_gr_docs},
         {"build_grammar", (PyCFunction)grtable_build_grammar, METH_VARARGS, grtable_build_gr_docs},
+        {"gen_syntax_table", (PyCFunction)grtable_gen_syntax_table, METH_VARARGS, grtable_gen_syntax_table_docs},
         {"_tests", (PyCFunction)grtable_tests, METH_VARARGS, grtable_test_docs},
         {NULL, NULL, 0, NULL}
 };

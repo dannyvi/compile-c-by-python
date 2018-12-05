@@ -1,8 +1,9 @@
-import queue
-from typing import Set
-from .atoms import NTerm, Term, Value, Null
-import time
 import logging
+import queue
+import time
+from typing import Set
+
+from .atoms import NTerm, Term, Value, Null
 
 logging.getLogger().addHandler(logging.StreamHandler())
 
@@ -108,13 +109,7 @@ def first(symbol, grammar):
 
 def firsts(suffix, grammar):
     """Return the first terminal sets that may occur in the Formula body."""
-    if len(suffix) == 1:
-        return first(suffix[0], grammar)
-    else:
-        if isinstance(suffix[0], (Term, Value)) or suffix[0].nullable:
-            return first(suffix[0], grammar)
-        else:
-            return first(suffix[0], grammar).union(firsts(suffix[1:], grammar))
+    return first(suffix[0], grammar)
 
 
 def get_closure(cl, grammar, label):
@@ -259,9 +254,7 @@ def get_states_map(collection, grammar, symbols):
         states[clos.label] = currow
     return states
 
-
-def gen_syntax_table(grammar, symbols):
-    g = closure_collection(grammar, symbols)
-    states = get_states_map(g, grammar, symbols)
-    return states
-
+# def gen_syntax_table(grammar, symbols):
+#    g = closure_collection(grammar, symbols)
+#    states = get_states_map(g, grammar, symbols)
+#    return states

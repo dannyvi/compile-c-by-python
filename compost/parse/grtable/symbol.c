@@ -8,16 +8,16 @@
 #include "symbol.h"
 
 symbol_table SymbolTable[TBLEN];
-symbol_entry_list SymbolEntry={ 0, NULL };
+symbol_entry_list_t SymbolEntry={ {0}, NULL };
 
-symbol symbol_create(sym_type type, char* name) {
-    symbol sym;
+symbol_t symbol_create(sym_type type, char* name) {
+    symbol_t sym;
     sym.type = type;
     sym.name = name;
     return sym;
 }
 
-symbol_entry sentry_find(symbol sym){
+symbol_entry_t sentry_find(symbol_t sym){
     int len;
     if (sym.type==NTerm){len=128;}
     else {len=64;}
@@ -27,7 +27,7 @@ symbol_entry sentry_find(symbol sym){
         char * name = SymbolTable[i].name;
         char * name2 = sym.name;
         int eq = 1;
-        while(*name){
+        while(*name2 || *name){
             if (*name!=*name2){
                 eq = 0;
                 break;
@@ -38,11 +38,12 @@ symbol_entry sentry_find(symbol sym){
         }
         if (eq)
         {
-            symbol_entry e = {.entry=i};
+            symbol_entry_t e = {.entry=i};
             return e;
         }
     }
-    symbol_entry n = {.entry=255};
+
+    symbol_entry_t n = {.entry=255};
     return n;
 }
 
@@ -50,7 +51,7 @@ int SymbolEntry_len(void){
     if (!SymbolEntry.next) { return 0;}
     else {
         int n = 0;
-        symbol_entry_list *count = &SymbolEntry;
+        symbol_entry_list_t *count = &SymbolEntry;
         while (count->next) {
             n += 1;
             count = count->next;
@@ -59,16 +60,16 @@ int SymbolEntry_len(void){
     }
 }
 
-void SymbolEntry_push(symbol_entry entry) {
+void SymbolEntry_push(symbol_entry_t entry) {
     if (!SymbolEntry.next) {
-        symbol_entry_list *next = (symbol_entry_list *) calloc(1, sizeof(symbol_entry_list));
+        symbol_entry_list_t *next = (symbol_entry_list_t *) calloc(1, sizeof(symbol_entry_list_t));
         SymbolEntry.next = next;
         SymbolEntry.s_entry = entry;
     }
     else {
-        symbol_entry_list *n = &SymbolEntry;
+        symbol_entry_list_t *n = &SymbolEntry;
         do {n = n->next;} while (n->next);
-        n -> next = (symbol_entry_list *) calloc(1, sizeof(symbol_entry_list));
+        n -> next = (symbol_entry_list_t *) calloc(1, sizeof(symbol_entry_list_t));
         n -> s_entry = entry;
     }
 }
@@ -78,7 +79,7 @@ void SymbolEntry_print(void){
         printf("Empty");
     }
     else {
-        symbol_entry_list *e = &SymbolEntry;
+        symbol_entry_list_t *e = &SymbolEntry;
         while (e->next) {
             printf("%d ", e->s_entry.entry);
             e = e->next;
@@ -87,8 +88,8 @@ void SymbolEntry_print(void){
     }
 }
 
-void SymbolTable_add(symbol sym) {
-    symbol_entry index;
+void SymbolTable_add(symbol_t sym) {
+    symbol_entry_t index;
     int len;
     if (sym.type==NTerm){len=128;}
     else {len=64;}
@@ -105,8 +106,8 @@ void SymbolTable_add(symbol sym) {
     }
 }
 
-void build_symbol_table(symbol * symbols, size_t size) {
-    symbol * sym = symbols;
+void build_symbol_table(symbol_t * symbols, size_t size) {
+    symbol_t * sym = symbols;
     for (int i=0;i<(int)size;i++){
         SymbolTable_add(*sym);
         sym += 1;
