@@ -76,7 +76,9 @@ static void test_closure_collection(void) {
         length += 1;
         cc = cc->next;
     }
+    print_collection_t(cc);
     printf("Length: %d\n",length);
+
 }
 
 int tests (void) {

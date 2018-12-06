@@ -59,12 +59,12 @@ symbol_sets_t  * first_sets_proc(symbol_entry_t * sym) {
                         if(!entry_in_symbol_sets(headers->current, sets)){
                             symbol_sets_add(headers->current, queue);
                         }
-                        free(headers);
+                        //free(headers);
                         headers = headers->next;
                     }
                 }
             }
-            free(queue);
+            //free(queue);
             queue = queue->next;
         }
         return terms;
@@ -143,7 +143,6 @@ int item_in_closure(pitem_t * item, closure_list_t * set){
 static void add_cl(pitem_t itm, closure_list_t *clp) {
     clp->item = itm;
     clp->next = calloc(1, sizeof(closure_list_t));
-    clp = clp->next;
 }
 
 void print_closure_list_t(char * message, closure_list_t * clist) {
@@ -197,45 +196,31 @@ void sort_closure_list_t(closure_list_t *head) {
 
 
 closure_t * get_closure(closure_list_t * clist, int label) {
-    closure_list_t *queue, *set, *qp, *countq, *sp, *cp;
+    closure_list_t *queue, *set, *qp, *countq, *cp;
     cp = clist;
     queue = calloc(1, sizeof(closure_list_t));
-    set = calloc(1, sizeof(closure_list_t));
+    set = queue; //calloc(1, sizeof(closure_list_t));
     qp = queue;
-    sp = set;
     int length = 0;
     while (cp->next) {
         add_cl(cp->item, qp);
-        add_cl(cp->item, sp);
         qp = qp->next;
-        sp = sp->next;
         length += 1;
         cp = cp->next;
     }
-    //print_closure_list_t("queue: ", queue);
-    //print_closure_list_t("set: ", set);
     countq = queue;
     while (countq->next) {
         pitem_t item = countq->item;
-        //print_pitem_t(&item);
         symbol_entry_t sentry =item.body[(int)item.dot.entry+1];
         if (sentry.entry && sentry.flag==NTerm) {
             prod_list_t *prods = get_productions(&sentry);
-            prod_list_t *pp = prods;            //
-            while(pp->next) {
-                //printf("prods: ");
-                //print_pitem_t((pitem_t *)pp);
-                pp = pp->next;
-            }                                   //
             symbol_entry_t * suffix=calloc(1, sizeof(symbol_entry_t));
             if(item.body[(int)(item.dot.entry + 2)].entry){
                 *suffix = item.body[(int)(item.dot.entry + 2)];
             } else {
                 *suffix = item.follow;
             }
-            //printf("prod %d suffix: %d ", length, suffix->entry);
             symbol_sets_t  *tms = first_sets(suffix);
-            //print_symbol_sets("terms: ", tms);
             symbol_sets_t  *itert;
             symbol_entry_t *posit = calloc(1, sizeof(symbol_entry_t));
             posit->entry = 0;
@@ -243,13 +228,9 @@ closure_t * get_closure(closure_list_t * clist, int label) {
                 itert = tms;
                 while (itert->next) {
                     pitem_t * newitem = build_pitem_t(&(prods->current), *posit, itert->current);
-                    //print_pitem_t_str(newitem);
                     if (!item_in_closure(newitem, set)) {
-                        //print_pitem_t(newitem);
-                        add_cl(*newitem, sp);
                         add_cl(*newitem, qp);
                         qp = qp->next;
-                        sp = sp->next;
                         length += 1;
                     }
                     itert = itert->next;
@@ -259,10 +240,7 @@ closure_t * get_closure(closure_list_t * clist, int label) {
         }
         countq = countq->next;
     }
-    //print_closure_list_t("----------------unsorted:\n", set);
-    //printf("\n\n");
     sort_closure_list_t(set);
-    //print_closure_list_t("sorted:\n", set);
     closure_t *t = calloc(1, sizeof(closure_t));
     t->label = label;
     t->length = length;
@@ -324,7 +302,6 @@ closure_t * goto_closure(closure_t *clos, symbol_entry_t sentry) {
 static void add_clos(closure_t *t, col_chain_t *coll){
     coll->c = *t;
     coll->next = calloc(1, sizeof(col_chain_t));
-    coll = coll->next;
 }
 
 static int has_in_goto_list(closure_t *clos, closure_t *goclos, symbol_entry_t * ent){
@@ -364,10 +341,10 @@ col_chain_t * closure_collection(void) {
     int label = 0;
     col_chain_t * queue = calloc(1, sizeof(col_chain_t));
     col_chain_t * collection = queue;
-    col_chain_t *qp, *cp, *countq;
+    col_chain_t *qp, *countq;
     qp = queue;
     countq = queue;
-    cp = collection;
+
     int length = 0;
     symbol_entry_t posit = {.entry=0};
     symbol_t sym = symbol_create(Value, "$");
@@ -377,11 +354,11 @@ col_chain_t * closure_collection(void) {
     start->item = *startitem;
     start->next = calloc(1, sizeof(closure_list_t));
     closure_t *t = get_closure(start, label);
-    //print_closure_t("closure_t:", t);
+
     add_clos(t, qp);
-    add_clos(t, cp);
+
     qp = qp->next;
-    cp = cp->next;
+
     length += 1;
 
     while (countq->next){
@@ -396,9 +373,9 @@ col_chain_t * closure_collection(void) {
                     label += 1;
                     goclos->label=label;
                     add_clos(goclos, qp);
-                    add_clos(goclos, cp);
+
                     qp = qp->next;
-                    cp = cp->next;
+
                     length += 1;
                     add_goto_list(clos, goclos, &ent->s_entry);
                 }

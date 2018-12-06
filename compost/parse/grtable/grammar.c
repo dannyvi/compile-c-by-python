@@ -61,7 +61,7 @@ symbol_sets_t * union_symbol_sets(symbol_sets_t  *seta, symbol_sets_t  *setb){
     while (c->next) {
         if (entry_in_symbol_sets(c->current, seta)) {
                 c->current = c->next->current;
-                free(c->next);
+                //free(c->next);
                 c->next = c->next->next;
         }
         else {
