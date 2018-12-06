@@ -119,6 +119,7 @@ static PyObject*  grtable_build_grammar(PyObject* self, PyObject* PyProd){
     return Py_None;
 }
 
+
 static PyObject* grtable_gen_syntax_table(PyObject* self, PyObject* obj) {
     PyErr_Print();
     col_chain_t * cc = closure_collection();
@@ -130,42 +131,7 @@ static PyObject* grtable_gen_syntax_table(PyObject* self, PyObject* obj) {
         cc = cc->next;
     }
 
-    state_action_t * states = get_states_map(c, length);
-    state_action_t *t = states;
-    Py_ssize_t len= 0;
-    PyObject *result = PyList_New(len);
-    char *str= calloc(20, sizeof(char));
-    for (int i=0; i<length; i++, t+=sym_size){
-        PyObject *listobj = PyList_New(len);
-        for (int j=0; j<sym_size; j++) {
-            memset(str, 0, 20);
-            if ((t+j)->act==ERROR) {
-                int strlen = snprintf( NULL, 0, "%s", "." );
-                snprintf( str, strlen + 1, "%s", "." );
-            }
-            else if ((t+j)->act==ACCEPT) {
-                int strlen = snprintf( NULL, 0, "%s", "$" );
-                snprintf( str, strlen + 1, "%s", "$" );
-            }
-            else if ((t+j)->act==NTACT) {
-                int strlen = snprintf( NULL, 0, "%d", (t+j)->state );
-                snprintf( str, strlen + 1, "%d", (t+j)->state );
-            }
-            else if ((t+j)->act==SHIFT) {
-                int strlen = snprintf( NULL, 0, "s%d", (t+j)->state );
-                snprintf( str, strlen + 1, "s%d", (t+j)->state );
-            }
-            else {
-                int strlen = snprintf( NULL, 0, "r%d", (t+j)->state );
-                snprintf( str, strlen + 1, "r%d", (t+j)->state );
-            }
-            PyObject * item = Py_BuildValue("s", str);
-            PyList_Append(listobj, item);
-        }
-        PyList_Append(result, listobj);
-    }
-    PyErr_Print();
-    return result;
+    return get_states_list(c, length);
 }
 
 static PyObject*  grtable_tests(PyObject* self, PyObject* obj){

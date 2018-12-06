@@ -7,6 +7,8 @@
 #include "grammar.h"
 #include "closure.h"
 
+#include "Python.h"
+
 ntfirsts NTFirst[128];
 
 static symbol_sets_t  * get_entry_headers(symbol_entry_t * sym) {
@@ -410,7 +412,7 @@ col_chain_t * closure_collection(void) {
 
         countq = countq->next;
     }
-    printf("Closure Collections: %d", length);
+    printf("Closure Collections: %d\n", length);
 
     return collection;
 }
@@ -443,6 +445,7 @@ static unsigned char SymbolAntiMap[256];
 
 void init_anti_map(void) {
     unsigned char * anti_map = &SymbolAntiMap;
+    memset(anti_map, 0, 256);
     symbol_entry_list_t * se = &SymbolEntry;
     int counter = 0;
     while (se->next) {
@@ -452,103 +455,78 @@ void init_anti_map(void) {
     }
 }
 
-static void write_state_line(closure_t *clos, state_action_t *start) {
-    //goto list item, find shift action.
+
+void write_list_line(closure_t *clos, PyObject *list) {
+    action_t action = malloc(8*sizeof(char));
+    int golabel, strlen;
+    // shift actions
     goto_list_t *golist = clos->goto_list;
-    //printf(" %d ", clos->label);
-    //print_closure_t("clos", clos);
-
     if (golist) {
-        //printf("shifting");
-        while (golist->next) {
+        while (golist->next){
             symbol_entry_t posit = golist->sym_index;
-            int golabel = golist->closure->label;
-            state_action_t action;
-            action.act = posit.flag==NTerm ? NTACT : SHIFT;
-            action.state = golabel;
-            *(start+SymbolAntiMap[posit.entry]) = action;
-
+            golabel = golist->closure->label;
+            strlen = snprintf( NULL, 0, "%d", golabel );
+            memset(action, 0, 8);
+            posit.flag==NTerm ? snprintf( action, strlen + 1, "%d", golabel ) :
+                                snprintf( action, strlen + 2, "s%d", golabel );
+            PyObject * listitem = Py_BuildValue("s", action);
+            PyList_SetItem(list, SymbolAntiMap[posit.entry], listitem);
             golist = golist->next;
         }
     }
     // check reduce action in closure items;
     symbol_entry_t accept_entry = sentry_find(symbol_create(Value, "$"));
     pitem_t acc_item = {.body={0,1}, .dot={1}, .follow=accept_entry};
-    pitem_t *item = clos->items;
-    for (int i=0; i<clos->length; i++,item++){
-        if (acc_item.pnum == item->pnum) {
-            state_action_t action = {.act=ACCEPT};
-            *(start+SymbolAntiMap[accept_entry.entry]) = action;
+    pitem_t *pitem = clos->items;
+    for (int i=0; i<clos->length; i++,pitem++){
+        memset(action, 0, 8);
+        if (acc_item.pnum == pitem->pnum){
+            action = "$";
+            PyObject * listitem = Py_BuildValue("s", action);
+            PyList_SetItem(list, SymbolAntiMap[accept_entry.entry], listitem);
         }
-        else {
-        int length = 0;
-        while(item->body[length].entry || length==0){
-            length += 1;
+        else{
+            int plen = 0;
+            while(pitem->body[plen].entry || plen==0){
+                plen += 1;
+            }
+            if (pitem->dot.entry == plen-1) {
+                int number = get_prod_number(pitem);
+                strlen = snprintf( NULL, 0, "%d", number );
+                snprintf(action, strlen+2, "r%d", number);
+                PyObject * listitem = Py_BuildValue("s", action);
+                PyList_SetItem(list, SymbolAntiMap[pitem->follow.entry], listitem);
+            }
         }
-        if (item->dot.entry == length-1) {
-            state_action_t action;
-            action.act = REDUCE;
-            action.state = get_prod_number(item);
-            *(start+SymbolAntiMap[item->follow.entry]) = action;
-        }}
     }
 }
 
-state_action_t * get_states_map(col_chain_t *c, size_t length){
+PyObject * get_states_list(col_chain_t *c, size_t length) {
+    PyObject * result;
     init_anti_map();
     int sym_size = SymbolEntry_len();
-    static state_action_t * states ;
-    states= (state_action_t *) malloc(length*sym_size*sizeof(state_action_t));
+    //use 8 chars for every action string.
+    action_t action = malloc(8*sizeof(char));
+    action = ".";
 
-    if(states == NULL)
-    {
-		fprintf(stderr, "out of memory\n");
-		exit(EXIT_FAILURE);
+    // pass 1, initialize every element to error
+    result = PyList_New(length);
+    for (Py_ssize_t i=0; i<length; i++) {
+        PyObject * line = PyList_New(sym_size);
+        for (Py_ssize_t j=0; j<sym_size; j++){
+            PyObject * elem = Py_BuildValue("s", action);
+            PyList_SetItem(line, j, elem);
+        }
+        PyList_SetItem(result, i, line);
     }
-    state_action_t init_state = {.act=ERROR, .state=0};
-
-    // initialized with error state.
-    for (int i = 0;i<length*sym_size;i++){
-        (states+i)->act_num = init_state.act_num;
-    }
-
-    // each closure
+    // pass 2, fill lines in closures of col_chain.
     while (c->next) {
         closure_t *clos = &(c->c);
-        state_action_t * start_state = states + (clos->label * sym_size);
-        write_state_line(clos, start_state);
-        c = c->next;
+        PyObject *item = PyList_GetItem(result, clos->label);
+        write_list_line(clos, item);
+        c=c->next;
     }
 
-    //print_states(states, length);
-    //printf("pointer states: %ld \n", states);
-
-    return states;
-}
-
-void print_states(state_action_t * states, int length) {
-    int sym_size = SymbolEntry_len();
-    //printf("Length: %d\n", sym_size);
-    state_action_t * t = states ;
-
-    symbol_entry_list_t *s = &SymbolEntry;
-    printf("start ");
-    while (s->next) {
-        printf("%-4d ", s->s_entry.entry);
-        s = s->next;
-    }
-    printf("\n");
-    for (int i=0; i<length; i++, t += sym_size) {
-        printf("%-6d", i);
-        //char * act_str;
-        for (int j=0; j<sym_size; j++){
-            if ((t+j)->act==ERROR) {printf(".    ");}
-            else if ((t+j)->act==ACCEPT) {printf("$    ");}
-            else if ((t+j)->act==NTACT) {printf("%-5d", (t+j)->state);}
-            else if ((t+j)->act==SHIFT) {printf("s%-4d",(t+j)->state);}
-            else {printf("r%-4d", (t+j)->state);}
-        }
-        printf("\n");
-    }
+    return result;
 }
 

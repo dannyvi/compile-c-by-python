@@ -77,8 +77,6 @@ static void test_closure_collection(void) {
         cc = cc->next;
     }
     printf("Length: %d\n",length);
-    state_action_t * states = get_states_map(c, length);
-    // print_states(states, length);
 }
 
 int tests (void) {

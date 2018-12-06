@@ -1,5 +1,7 @@
-from .sdt import SDT
+# from .sdt import SDT
 
 
 def flatten_grammar(grammar):
-    return list(map(lambda x: [x.head] + list(x.body), grammar))
+    grm = list(map(lambda x: [x.head] + list(x.body), grammar))
+    grm[0].pop()
+    return grm

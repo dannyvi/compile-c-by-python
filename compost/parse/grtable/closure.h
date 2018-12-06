@@ -11,6 +11,7 @@ extern "C" {
 
 #include "symbol.h"
 #include "grammar.h"
+#include "Python.h"
 
 #define NONE_LABEL 100000000
 
@@ -71,18 +72,12 @@ void print_collection_t(col_chain_t * c);
 #define ERROR 3
 #define ACCEPT 4
 
-typedef union state_action_t state_action_t;
-union state_action_t {
-    int act_num;
-    struct {
-        int state:28;
-        int act:4;
-    };
-};
 
 
-state_action_t * get_states_map(col_chain_t *c, size_t length);
-void print_states(state_action_t * states, int length);
+typedef char* action_t ;
+
+
+PyObject * get_states_list(col_chain_t *c, size_t length);
 
 #ifdef __cplusplus
 }
