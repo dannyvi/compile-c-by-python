@@ -62,7 +62,6 @@ struct clos_entry_sets_t {
 };
 
 closure_t * get_closure(closure_list_t * clist, int label);
-
 closure_t * goto_closure(closure_t *clos, symbol_entry_t sentry);
 void print_closure_t(char * message, closure_t * ct);
 int eq_closure_t(closure_t *a, closure_t *b);

@@ -15,7 +15,7 @@ typedef struct symbol_t {
 } symbol_t;
 
 typedef union symbol_entry_t {
-    unsigned char entry;
+    unsigned char id;
     struct {
         unsigned char index:6;   // the index in the symbol_table.
         unsigned char flag:2;  // symbol_t 0 is NTerm 2: Term, 3:Value.
@@ -23,13 +23,14 @@ typedef union symbol_entry_t {
 } symbol_entry_t;
 
 
-typedef struct symbol_entry_list_t symbol_entry_list_t;
-struct symbol_entry_list_t {
-    symbol_entry_t s_entry;
-    symbol_entry_list_t *next;
+typedef struct symbol_sets_t  symbol_sets_t ;
+struct symbol_sets_t  {
+    symbol_entry_t entry;
+    symbol_sets_t  *next;
 };
 
-extern symbol_entry_list_t SymbolEntry;
+
+extern symbol_sets_t SymbolEntry;
 
 int SymbolEntry_len(void);
 void SymbolEntry_push(symbol_entry_t);

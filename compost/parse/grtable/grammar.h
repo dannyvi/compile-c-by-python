@@ -22,7 +22,7 @@ typedef union production_t {
     } ;
 } production_t, pitem_t;
 
-pitem_t * build_pitem_t(production_t *prod, symbol_entry_t pos, symbol_entry_t follow);
+pitem_t build_pitem_t(production_t *prod, symbol_entry_t pos, symbol_entry_t follow);
 
 typedef struct prod_list_t prod_list_t;
  struct prod_list_t {
@@ -38,14 +38,6 @@ void Grammar_init(size_t size);
 
 void Grammar_add(production_t);
 void Grammar_print(void);
-
-
-typedef struct symbol_sets_t  symbol_sets_t ;
-
-struct symbol_sets_t  {
-    symbol_entry_t current;
-    symbol_sets_t  *next;
-};
 
 symbol_sets_t  * new_symbol_sets(void) ;
 int entry_in_symbol_sets(symbol_entry_t, symbol_sets_t  *);

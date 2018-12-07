@@ -8,7 +8,7 @@
 #include "symbol.h"
 
 symbol_table SymbolTable[TBLEN];
-symbol_entry_list_t SymbolEntry={ {0}, NULL };
+symbol_sets_t SymbolEntry={ {0}, NULL };
 
 symbol_t symbol_create(sym_type type, char* name) {
     symbol_t sym;
@@ -38,12 +38,12 @@ symbol_entry_t sentry_find(symbol_t sym){
         }
         if (eq)
         {
-            symbol_entry_t e = {.entry=i};
+            symbol_entry_t e = {.id=i};
             return e;
         }
     }
 
-    symbol_entry_t n = {.entry=255};
+    symbol_entry_t n = {.id=255};
     return n;
 }
 
@@ -51,7 +51,7 @@ int SymbolEntry_len(void){
     if (!SymbolEntry.next) { return 0;}
     else {
         int n = 0;
-        symbol_entry_list_t *count = &SymbolEntry;
+        symbol_sets_t *count = &SymbolEntry;
         while (count->next) {
             n += 1;
             count = count->next;
@@ -62,15 +62,15 @@ int SymbolEntry_len(void){
 
 void SymbolEntry_push(symbol_entry_t entry) {
     if (!SymbolEntry.next) {
-        symbol_entry_list_t *next = (symbol_entry_list_t *) calloc(1, sizeof(symbol_entry_list_t));
+        symbol_sets_t *next = (symbol_sets_t *) calloc(1, sizeof(symbol_sets_t));
         SymbolEntry.next = next;
-        SymbolEntry.s_entry = entry;
+        SymbolEntry.entry = entry;
     }
     else {
-        symbol_entry_list_t *n = &SymbolEntry;
+        symbol_sets_t *n = &SymbolEntry;
         do {n = n->next;} while (n->next);
-        n -> next = (symbol_entry_list_t *) calloc(1, sizeof(symbol_entry_list_t));
-        n -> s_entry = entry;
+        n -> next = (symbol_sets_t *) calloc(1, sizeof(symbol_sets_t));
+        n -> entry = entry;
     }
 }
 
@@ -79,9 +79,9 @@ void SymbolEntry_print(void){
         printf("Empty");
     }
     else {
-        symbol_entry_list_t *e = &SymbolEntry;
+        symbol_sets_t *e = &SymbolEntry;
         while (e->next) {
-            printf("%d ", e->s_entry.entry);
+            printf("%d ", e->entry.id);
             e = e->next;
         }
         printf("\n\n");
@@ -99,7 +99,7 @@ void SymbolTable_add(symbol_t sym) {
         if (!SymbolTable[i].name[0]){
             t += i * sizeof(symbol_table);
             strcpy(t, sym.name);
-            index.entry = (unsigned char) i;
+            index.id = (unsigned char) i;
             SymbolEntry_push(index);
             return ;
         }
