@@ -70,13 +70,13 @@ static void test_get_closure(void) {
 
 static void test_closure_collection(void) {
     col_chain_t * cc = closure_collection();
-    col_chain_t * c = cc;
+    //col_chain_t * c = cc;
     int length = 0;
     while (cc->next) {
         length += 1;
         cc = cc->next;
     }
-    print_collection_t(cc);
+    //print_collection_t(c);
     printf("Length: %d\n",length);
 
 }

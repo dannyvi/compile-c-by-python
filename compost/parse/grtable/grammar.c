@@ -61,7 +61,6 @@ symbol_sets_t * union_symbol_sets(symbol_sets_t  *seta, symbol_sets_t  *setb){
     while (c->next) {
         if (entry_in_symbol_sets(c->current, seta)) {
                 c->current = c->next->current;
-                //free(c->next);
                 c->next = c->next->next;
         }
         else {
@@ -140,7 +139,7 @@ pitem_t * build_pitem_t(production_t *prod, symbol_entry_t pos, symbol_entry_t f
 
 void print_pitem_t(pitem_t *item) {
     __uint128_t g = item->pnum;
-    printf ("0x%16lx%15lx  ", (uint64_t) (g >> 64), (uint64_t) g);
+    printf ("0x%16llx%15llx  ", (uint64_t) (g >> 64), (uint64_t) g);
     printf("Pitem: ");
     for (int c =0; c<14; c++){
         if (!(item->body[c].entry == 0 && c>0)){

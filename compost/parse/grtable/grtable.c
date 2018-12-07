@@ -119,19 +119,17 @@ static PyObject*  grtable_build_grammar(PyObject* self, PyObject* PyProd){
     return Py_None;
 }
 
+static Py_ssize_t len(col_chain_t * c){
+    Py_ssize_t length=0;
+    for (;c->next;length++,c=c->next){}
+    return length;
+}
 
 static PyObject* grtable_gen_syntax_table(PyObject* self, PyObject* obj) {
     PyErr_Print();
     col_chain_t * cc = closure_collection();
-    col_chain_t * c = cc;
-    int sym_size = SymbolEntry_len();
-    int length = 0;
-    while (cc->next) {
-        length += 1;
-        cc = cc->next;
-    }
-
-    return get_states_list(c, length);
+    Py_ssize_t length = len(cc);
+    return get_states_list(cc, length);
 }
 
 static PyObject*  grtable_tests(PyObject* self, PyObject* obj){

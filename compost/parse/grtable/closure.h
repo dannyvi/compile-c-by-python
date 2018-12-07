@@ -47,8 +47,19 @@ struct closure_t {
     pitem_t * items;
     goto_list_t *goto_list;
     goto_list_t *goto_tail;
+    symbol_sets_t accept_symbols;
 };
 
+typedef struct clos_entry_t {
+    symbol_entry_t nterm;
+    symbol_entry_t follow;
+} clos_entry_t;
+
+typedef struct clos_entry_sets_t clos_entry_sets_t;
+struct clos_entry_sets_t {
+    clos_entry_t entry;
+    clos_entry_sets_t *next;
+};
 
 closure_t * get_closure(closure_list_t * clist, int label);
 
@@ -77,7 +88,7 @@ void print_collection_t(col_chain_t * c);
 typedef char* action_t ;
 
 
-PyObject * get_states_list(col_chain_t *c, size_t length);
+PyObject * get_states_list(col_chain_t *c, Py_ssize_t length);
 
 #ifdef __cplusplus
 }
