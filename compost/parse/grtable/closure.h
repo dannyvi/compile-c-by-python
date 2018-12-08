@@ -28,11 +28,24 @@ symbol_sets_t  * first_sets(symbol_entry_t *);
 
 typedef struct closure_t closure_t;
 typedef struct goto_list_t goto_list_t;
+
+struct closure_t {
+    int label;
+    int length;
+    pitem_t * items;
+    goto_list_t *goto_list;
+    goto_list_t *goto_tail;
+    symbol_sets_t * accept_symbols;
+};
+
 struct goto_list_t {
     symbol_entry_t sym_index;                     // goto closure by this sym_index;
-    closure_t *closure;                  // goto closure;
+    closure_t closure;                  // goto closure;
     goto_list_t *next;                     // the next goto item.
 };
+
+void free_goto_list(goto_list_t *lst);
+void free_symbol_sets(symbol_sets_t *sets);
 
 typedef struct closure_list_t closure_list_t;
 
@@ -41,14 +54,7 @@ struct closure_list_t {
     closure_list_t *next;
 };
 
-struct closure_t {
-    int label;
-    int length;
-    pitem_t * items;
-    goto_list_t *goto_list;
-    goto_list_t *goto_tail;
-    symbol_sets_t accept_symbols;
-};
+
 
 typedef struct clos_entry_t {
     symbol_entry_t nterm;

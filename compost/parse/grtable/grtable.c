@@ -67,7 +67,7 @@ static PyObject* grtable_init_symbols(PyObject* self, PyObject* args)
 
     build_symbol_table(syms, length);
 
-    SymbolTable_print();
+    //SymbolTable_print();
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -79,9 +79,9 @@ static PyObject*  grtable_init_grammar(PyObject* self, PyObject* size){
     if (!PyArg_ParseTuple(size, "i", &m)) {
         return NULL;
     }
-    printf("Init Grammar: %d\n", m);
+    //printf("Init Grammar: %d\n", m);
     Grammar_init((size_t) m);
-    printf("Count: %d\n", GrammarCount);
+    //printf("Count: %d\n", GrammarCount);
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -110,10 +110,10 @@ static PyObject*  grtable_build_grammar(PyObject* self, PyObject* PyProd){
         Grammar_add(*product);
     }
 
-    Grammar_print();
+    //Grammar_print();
 
     init_NTFirst();
-    NTFirst_print();
+    //NTFirst_print();
 
     Py_INCREF(Py_None);
     return Py_None;
