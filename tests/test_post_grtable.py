@@ -5,7 +5,7 @@ from compost.parse.table import *
 
 gram_filename = os.path.dirname(
     os.path.dirname(
-        os.path.abspath(__file__))) + '/compost/gram/a.grammar'
+        os.path.abspath(__file__))) + '/compost/gram/ansic.grammar'
 
 lex_filename = os.path.dirname(
     os.path.dirname(

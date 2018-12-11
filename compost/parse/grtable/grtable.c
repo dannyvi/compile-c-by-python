@@ -87,12 +87,12 @@ static PyObject*  grtable_init_grammar(PyObject* self, PyObject* size){
 }
 
 production_t* pyobj_build_production_t(PyObject *prod ){
-    production_t *product = calloc(1, sizeof(production_t));
+    production_t *product = PyMem_Calloc(1, sizeof(production_t));
     long length = PyList_Size(prod);
     for (int i = 0; i < length; i++) {
         PyObject* temp = PyList_GetItem(prod, i);
         symbol_t s = pyobj_build_symbol(temp);
-        symbol_entry_t e = sentry_find(s);
+        sym_ent_t e = sentry_find(s);
         product->body[i] = e;
     }
     return product;
@@ -113,13 +113,13 @@ static PyObject*  grtable_build_grammar(PyObject* self, PyObject* PyProd){
     //Grammar_print();
 
     init_NTFirst();
-    //NTFirst_print();
+    NTFirst_print();
 
     Py_INCREF(Py_None);
     return Py_None;
 }
 
-static Py_ssize_t len(col_chain_t * c){
+static Py_ssize_t len(clos_list_t * c){
     Py_ssize_t length=0;
     for (;c->next;length++,c=c->next){}
     return length;
@@ -127,8 +127,10 @@ static Py_ssize_t len(col_chain_t * c){
 
 static PyObject* grtable_gen_syntax_table(PyObject* self, PyObject* obj) {
     PyErr_Print();
-    col_chain_t * cc = closure_collection();
-    Py_ssize_t length = len(cc);
+
+
+    //clos_list_t * cc = closure_collection();
+    //Py_ssize_t length = len(cc);
     return get_states_list(cc, length);
 }
 

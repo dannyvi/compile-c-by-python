@@ -1,8 +1,7 @@
-from compost.parser import Parser
-from compost.generator import LLVMCodeGenerator
 import os
-import pytest
-import llvmlite.ir as ir
+
+from compost.generator import LLVMCodeGenerator
+from compost.parser import Parser
 
 gram_filename = os.path.dirname(
     os.path.dirname(
@@ -18,4 +17,4 @@ def test_expression():
     generator = LLVMCodeGenerator()
     generator.generate_code(ast)
     print(str(generator.module))
-    ir.LiteralStructType()
+    # ir.LiteralStructType()

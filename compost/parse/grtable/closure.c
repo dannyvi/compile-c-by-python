@@ -11,12 +11,12 @@
 
 ntfirsts NTFirst[128];
 
-static symbol_sets_t  * get_entry_headers(symbol_entry_t * sym) {
+static symt_list_t  * get_entry_headers(sym_ent_t * sym) {
     prod_list_t * pl = get_productions(sym);
-    symbol_sets_t  *s = calloc(1, sizeof(symbol_sets_t ));
+    symt_list_t  *s = PyMem_Calloc(1, sizeof(symt_list_t ));
     while (pl->next) {
         production_t p = pl->current;
-        symbol_entry_t sentry = p.body[1];
+        sym_ent_t sentry = p.body[1];
         if (!s->next) {
             symbol_sets_add(sentry, s);
         } else {
@@ -29,20 +29,20 @@ static symbol_sets_t  * get_entry_headers(symbol_entry_t * sym) {
     return s;
 }
 
-symbol_sets_t  * first_sets_proc(symbol_entry_t * sym) {
+symt_list_t  * first_sets_proc(sym_ent_t * sym) {
     if (sym->flag != NTerm){
-        symbol_sets_t  * s = symbol_sets_create(sym, 1);
+        symt_list_t  * s = symbol_sets_create(sym, 1);
         return s;
     }
     else {
-        symbol_sets_t  *sets, *queue,  *terms;
+        symt_list_t  *sets, *queue,  *terms;
         sets = new_symbol_sets();
         terms = new_symbol_sets();
 
         queue = symbol_sets_create(sym, 1);
 
         while (queue->next) {
-            symbol_entry_t current = queue->entry;
+            sym_ent_t current = queue->entry;
             if (!sets->next || !entry_in_symbol_sets(current, sets)) {
                 symbol_sets_add(current, sets);
                 if (current.flag!=NTerm){
@@ -51,7 +51,7 @@ symbol_sets_t  * first_sets_proc(symbol_entry_t * sym) {
                     }
                 }
                 else {
-                    symbol_sets_t  *headers = get_entry_headers(&current);
+                    symt_list_t  *headers = get_entry_headers(&current);
                     while(headers->next){
                         if(!entry_in_symbol_sets(headers->entry, sets)){
                             symbol_sets_add(headers->entry, queue);
@@ -67,8 +67,8 @@ symbol_sets_t  * first_sets_proc(symbol_entry_t * sym) {
 }
 
 void init_NTFirst(void) {
-    symbol_entry_t * sentry = calloc(1, sizeof(symbol_entry_t)) ;
-    symbol_sets_t  * set, *frset;
+    sym_ent_t * sentry = PyMem_Calloc(1, sizeof(sym_ent_t)) ;
+    symt_list_t  * set, *frset;
     ntfirsts * flist;
     for (int i=0;i<128;i++) {
         if (SymbolTable[i].name[0]!=0 ){
@@ -79,25 +79,25 @@ void init_NTFirst(void) {
             int counter = 0;
 
             while (set->next) {
-                *((symbol_entry_t *)flist+counter*sizeof(symbol_entry_t)) = set->entry;
+                *((sym_ent_t *)flist+counter*sizeof(sym_ent_t)) = set->entry;
                 counter += 1;
                 set = set->next;
             }
-            free_symbol_sets(frset);
+            PyMem_Free_symbol_sets(frset);
         }
     }
 }
 
 void NTFirst_print(void) {
-    symbol_entry_t *flist;
+    sym_ent_t *flist;
     printf("First sets from %s\n", __FILE__);
     for (int i=0; i<128; i++) {
-        flist = (symbol_entry_t *)&NTFirst[i];
+        flist = (sym_ent_t *)&NTFirst[i];
         if ((flist)->id){
             int counter = 0;
             printf("Firsts %d: ", i);
-            while (  (flist+counter*sizeof(symbol_entry_t))->id ) {
-                printf("%d ", (flist+counter*sizeof(symbol_entry_t))->id );
+            while (  (flist+counter*sizeof(sym_ent_t))->id ) {
+                printf("%d ", (flist+counter*sizeof(sym_ent_t))->id );
                 counter += 1;
             }
             printf("\n");
@@ -105,19 +105,19 @@ void NTFirst_print(void) {
     }
 }
 
-symbol_sets_t  * first_sets(symbol_entry_t * sym){
+symt_list_t  * first_sets(sym_ent_t * sym){
     if (sym->flag != NTerm){
-        symbol_sets_t  * s = symbol_sets_create(sym, 1);
+        symt_list_t  * s = symbol_sets_create(sym, 1);
         return s;
     }
     else {
         int entry = (int) sym->id;
         int counter = 0;
-        symbol_sets_t  *set = calloc(1,sizeof(symbol_sets_t ));
-        symbol_sets_t  *sp = set;
+        symt_list_t  *set = PyMem_Calloc(1,sizeof(symt_list_t ));
+        symt_list_t  *sp = set;
         while (NTFirst[entry][counter].id){
             sp->entry = NTFirst[entry][counter];
-            sp->next = calloc(1, sizeof(symbol_sets_t ));
+            sp->next = PyMem_Calloc(1, sizeof(symt_list_t ));
             sp = sp->next;
             counter += 1;
         }
@@ -125,8 +125,8 @@ symbol_sets_t  * first_sets(symbol_entry_t * sym){
     }
 }
 
-int item_in_closure(pitem_t item, closure_list_t * set){
-    closure_list_t *l = set;
+int item_in_closure(pitem_t item, pitem_list_t * set){
+    pitem_list_t *l = set;
     while (l->next) {
         if (item.pnum==l->item.pnum) {return 1;}
         l = l->next;
@@ -134,13 +134,13 @@ int item_in_closure(pitem_t item, closure_list_t * set){
     return 0;
 }
 
-static void add_cl(pitem_t itm, closure_list_t *clp) {
+static void add_cl(pitem_t itm, pitem_list_t *clp) {
     clp->item = itm;
-    clp->next = calloc(1, sizeof(closure_list_t));
+    clp->next = PyMem_Calloc(1, sizeof(pitem_list_t));
 }
 
-void print_closure_list_t(char * message, closure_list_t * clist) {
-    closure_list_t * cl = clist;
+void print_pitem_list_t(char * message, pitem_list_t * clist) {
+    pitem_list_t * cl = clist;
     printf("%s", message);
     while (cl->next) {
         print_pitem_t(&cl->item);
@@ -181,14 +181,14 @@ int cmpfunc (const void * a, const void * b) {
 }
 
 
-clos_entry_t new_clos_entry(symbol_entry_t nterm, symbol_entry_t follow) {
-    clos_entry_t c_ent;
+nterm_follow_t new_clos_entry(sym_ent_t nterm, sym_ent_t follow) {
+    nterm_follow_t c_ent;
     c_ent.nterm = nterm;
     c_ent.follow = follow;
     return c_ent;
 }
 
-int entry_in_clos_sets(clos_entry_t l, clos_entry_sets_t  *c){
+int entry_in_clos_sets(nterm_follow_t l, nf_list_t  *c){
     while (c)
     {
         if (c->entry.nterm.id == l.nterm.id &&
@@ -199,34 +199,34 @@ int entry_in_clos_sets(clos_entry_t l, clos_entry_sets_t  *c){
 }
 
 
-void clos_entry_sets_add(clos_entry_t sym, clos_entry_sets_t * s){
+void clos_entry_sets_add(nterm_follow_t sym, nf_list_t * s){
     if (!s->next){
         s->entry = sym;
-        s->next = calloc(1, sizeof(symbol_sets_t ));
+        s->next = PyMem_Calloc(1, sizeof(symt_list_t ));
     }
     else {
         while (s->next) {
             s = s->next;
         }
         s->entry = sym;
-        s->next = calloc(1, sizeof(symbol_sets_t ));
+        s->next = PyMem_Calloc(1, sizeof(symt_list_t ));
     }
 }
 
-static void free_closure_list(closure_list_t* cl){
-    closure_list_t * exchg;
+static void PyMem_Free_closure_list(pitem_list_t* cl){
+    pitem_list_t * exchg;
     while((exchg=cl)!=NULL) {
         cl = cl->next;
-        free(exchg);
+        PyMem_Free(exchg);
     }
 }
 
-static closure_t * build_closure(closure_list_t *set, int label, int length, symbol_sets_t *accept_symbols) {
-    closure_t *t = calloc(1, sizeof(closure_t));
+static closure_t * build_closure(pitem_list_t *set, int label, int length, symt_list_t *accept_symbols) {
+    closure_t *t = PyMem_Calloc(1, sizeof(closure_t));
 
     t->label = label;
     t->length = length;
-    t->items = calloc(length, sizeof(pitem_t));
+    t->items = PyMem_Calloc(length, sizeof(pitem_t));
     pitem_t *pp = t->items;
     while (set->next) {
         *pp = set->item;
@@ -238,13 +238,13 @@ static closure_t * build_closure(closure_list_t *set, int label, int length, sym
     return t;
 }
 
-closure_t * get_closure(closure_list_t * clist, int label) {
-    closure_list_t *queue, *set, *qp, *countq, *cp, *curr;
-    symbol_sets_t *accept_symbols = new_symbol_sets();
-    clos_entry_sets_t *added = calloc(1, sizeof(clos_entry_sets_t));
+closure_t * get_closure(pitem_list_t * clist, int label) {
+    pitem_list_t *queue, *set, *qp, *countq, *cp, *curr;
+    symt_list_t *accept_symbols = new_symbol_sets();
+    nf_list_t *added = PyMem_Calloc(1, sizeof(nf_list_t));
     cp = clist;
-    queue = calloc(1, sizeof(closure_list_t));
-    set = queue; //calloc(1, sizeof(closure_list_t));
+    queue = PyMem_Calloc(1, sizeof(pitem_list_t));
+    set = queue; //PyMem_Calloc(1, sizeof(pitem_list_t));
     qp = queue;
     int length = 0;
     while (cp->next) {
@@ -254,30 +254,31 @@ closure_t * get_closure(closure_list_t * clist, int label) {
         cp = cp->next;
     }
 
-    free_closure_list(clist);
+    PyMem_Free_closure_list(clist);
     countq = queue;
     while (countq->next) {
         pitem_t item = countq->item;
-        symbol_entry_t sentry =item.body[(int)item.dot.id+1];
+        sym_ent_t sentry =item.body[(int)item.dot.id+1];
         //add accept input symbols.
         if (!entry_in_symbol_sets(sentry, accept_symbols)){
             symbol_sets_add(sentry, accept_symbols);
         }
+
         //add productions.
         if (sentry.id && sentry.flag==NTerm) {
-            symbol_entry_t suffix;
+            sym_ent_t suffix;
             if(item.body[(int)(item.dot.id + 2)].id){
                 suffix = item.body[(int)(item.dot.id + 2)];
             } else {
                 suffix = item.follow;
             }
-            symbol_sets_t  *tms = first_sets(&suffix);
-            symbol_sets_t  *itert, *frtms;
-            symbol_entry_t posit;
+            symt_list_t  *tms = first_sets(&suffix);
+            symt_list_t  *itert, *frtms;
+            sym_ent_t posit;
             posit.id = 0;
             itert = tms;
             while (itert->next) {
-                clos_entry_t c_ent = new_clos_entry(sentry, itert->entry);
+                nterm_follow_t c_ent = new_clos_entry(sentry, itert->entry);
                 if (!entry_in_clos_sets(c_ent, added)){
                     clos_entry_sets_add(c_ent, added);
                     prod_list_t *prods = get_productions(&sentry);
@@ -285,26 +286,26 @@ closure_t * get_closure(closure_list_t * clist, int label) {
                     frprd = prods;
                     while(prods->next) {
                         pitem_t newitem = build_pitem_t(&(prods->current), posit, itert->entry);
-                        if (!item_in_closure(newitem, set)) {
+                        //if (!item_in_closure(newitem, set)) {
                             add_cl(newitem, qp);
                             qp = qp->next;
                             length += 1;
-                        }
+                        //}
                         prods = prods->next;
                     }
-                    // free productions chain;
+                    // PyMem_Free productions chain;
                     while((chgfr=frprd)!=NULL){
                         frprd = frprd->next;
-                        free(chgfr);
+                        PyMem_Free(chgfr);
                     }
                     prods=chgfr=frprd=NULL;
                 }
                 itert = itert->next;
             }
-            // free terminals chain;
+            // PyMem_Free terminals chain;
             while((frtms=tms)!=NULL){
                 tms = tms->next;
-                free(frtms);
+                PyMem_Free(frtms);
             }
             tms=frtms=itert=NULL;
         }
@@ -315,14 +316,14 @@ closure_t * get_closure(closure_list_t * clist, int label) {
 
     while ((curr = queue) != NULL) {
         queue = queue->next;
-        free (curr);
+        PyMem_Free (curr);
     }
     queue=set=qp=countq=cp=curr=NULL;
 
-    clos_entry_sets_t *fradded ;
+    nf_list_t *fradded ;
     while((fradded=added)!=NULL){
         added = added->next;
-        free(fradded);
+        PyMem_Free(fradded);
     }
 
     return t;
@@ -341,8 +342,8 @@ int eq_closure_t(closure_t *a, closure_t *b) {
 }
 
 /*
-int closure_in_collection(closure_t *clos, col_chain_t *collection){
-    col_chain_t *cc = collection;
+int closure_in_collection(closure_t *clos, clos_list_t *collection){
+    clos_list_t *cc = collection;
     if (!cc->next){return -1;}
     while(cc->next){
         if (eq_closure_t(clos, &cc->c)){return cc->c.label;}
@@ -351,8 +352,8 @@ int closure_in_collection(closure_t *clos, col_chain_t *collection){
     return -1;
 }*/
 
-closure_t ret_closure_in_collection(closure_t *clos, col_chain_t *collection){
-    col_chain_t *cc = collection;
+closure_t ret_closure_in_collection(closure_t *clos, clos_list_t *collection){
+    clos_list_t *cc = collection;
     closure_t ret;
     ret.label=-1;
     if (!cc->next){return ret;}
@@ -363,21 +364,21 @@ closure_t ret_closure_in_collection(closure_t *clos, col_chain_t *collection){
     return ret;
 }
 
-closure_t * goto_closure(closure_t *clos, symbol_entry_t sentry) {
-    closure_list_t *ss = calloc(1, sizeof(closure_list_t));
-    closure_list_t *set = ss;
+closure_t * goto_closure(closure_t *clos, sym_ent_t sentry) {
+    pitem_list_t *ss = PyMem_Calloc(1, sizeof(pitem_list_t));
+    pitem_list_t *set = ss;
     pitem_t *ptm = clos->items;
     for (int i=0; i<clos->length; i++,ptm++) {
         int pos = (int)(ptm->dot.id);
         if(ptm->body[pos+1].id==sentry.id && sentry.id!=0){
-            symbol_entry_t ent = {.id=pos+1};
+            sym_ent_t ent = {.id=pos+1};
             pitem_t newitem = build_pitem_t(ptm, ent, ptm->follow);
             add_cl(newitem, set);
             set = set->next;
         }
     }
     if (!ss->next) {
-        closure_t * t = calloc(1, sizeof(closure_t));
+        closure_t * t = PyMem_Calloc(1, sizeof(closure_t));
         t->length= 0 ;
         t->items = NULL;
         return t;
@@ -386,12 +387,12 @@ closure_t * goto_closure(closure_t *clos, symbol_entry_t sentry) {
     }
 }
 
-static void add_clos(closure_t *t, col_chain_t *coll){
+static void add_clos(closure_t *t, clos_list_t *coll){
     coll->c = *t;
-    coll->next = calloc(1, sizeof(col_chain_t));
+    coll->next = PyMem_Calloc(1, sizeof(clos_list_t));
 }
 
-static int has_in_goto_list(closure_t *clos, closure_t *goclos, symbol_entry_t * ent){
+static int has_in_goto_list(closure_t *clos, closure_t *goclos, sym_ent_t * ent){
     if (!clos->goto_list) {return 0;}
     goto_list_t *g = clos->goto_list;
     while (g->next) {
@@ -401,13 +402,13 @@ static int has_in_goto_list(closure_t *clos, closure_t *goclos, symbol_entry_t *
     return 0;
 }
 
-static void add_goto_list(closure_t *clos, closure_t goclos, symbol_entry_t * ent){
+static void add_goto_list(closure_t *clos, closure_t goclos, sym_ent_t * ent){
     //not initialized condition
     if (!clos->goto_list) {
-        goto_list_t *g = calloc(1, sizeof(goto_list_t));
+        goto_list_t *g = PyMem_Calloc(1, sizeof(goto_list_t));
         g->sym_index = *ent;
         g->closure = goclos;
-        g->next = calloc(1, sizeof(goto_list_t));
+        g->next = PyMem_Calloc(1, sizeof(goto_list_t));
         clos->goto_list = g;
         clos->goto_tail = g->next;
     }
@@ -416,28 +417,28 @@ static void add_goto_list(closure_t *clos, closure_t goclos, symbol_entry_t * en
             goto_list_t *g = clos->goto_tail;
             g->sym_index = *ent;
             g->closure = goclos;
-            g->next = calloc(1, sizeof(goto_list_t));
+            g->next = PyMem_Calloc(1, sizeof(goto_list_t));
             clos->goto_tail = g->next;
         }
     }
 }
 
-col_chain_t * closure_collection(void) {
+clos_list_t * closure_collection(void) {
     int label = 0;
-    col_chain_t * queue = calloc(1, sizeof(col_chain_t));
-    col_chain_t * collection = queue;
-    col_chain_t *qp, *countq;
+    clos_list_t * queue = PyMem_Calloc(1, sizeof(clos_list_t));
+    clos_list_t * collection = queue;
+    clos_list_t *qp, *countq;
     qp = queue;
     countq = queue;
 
     int length = 0;
-    symbol_entry_t posit = {.id=0};
+    sym_ent_t posit = {.id=0};
     symbol_t sym = symbol_create(Value, "$");
-    symbol_entry_t sentry = sentry_find(sym);
+    sym_ent_t sentry = sentry_find(sym);
     pitem_t startitem = build_pitem_t(&Grammar[0], posit, sentry);
-    closure_list_t *start = calloc(1, sizeof(closure_list_t));
+    pitem_list_t *start = PyMem_Calloc(1, sizeof(pitem_list_t));
     start->item = startitem;
-    start->next = calloc(1, sizeof(closure_list_t));
+    start->next = PyMem_Calloc(1, sizeof(pitem_list_t));
     closure_t *t = get_closure(start, label);
 
     add_clos(t, qp);
@@ -449,7 +450,7 @@ col_chain_t * closure_collection(void) {
     while (countq->next){
 
         closure_t *clos = &(countq->c);
-        symbol_sets_t *ent = clos->accept_symbols;
+        symt_list_t *ent = clos->accept_symbols;
         while(ent->next) {
             closure_t *goclos = goto_closure(clos, ent->entry);
             if (goclos->length>0) {
@@ -468,20 +469,20 @@ col_chain_t * closure_collection(void) {
                 else {
                     //goclos->label=golbl;
                     add_goto_list(clos, retclos, &ent->entry);
-                    symbol_sets_t *frsmb, *syms;
+                    symt_list_t *frsmb, *syms;
                     syms = goclos->accept_symbols;
                     while((frsmb=syms)!= NULL){
                         syms = syms->next;
-                        free(frsmb);
+                        PyMem_Free(frsmb);
                     }
                     frsmb = syms = NULL;
-                    free(goclos->items);
-                    free(goclos);
+                    PyMem_Free(goclos->items);
+                    PyMem_Free(goclos);
                     goclos = NULL;
                 }
             }
             else {
-                free(goclos);
+                PyMem_Free(goclos);
                 goclos=NULL;
             }
             ent = ent->next;
@@ -494,7 +495,7 @@ col_chain_t * closure_collection(void) {
     return collection;
 }
 
-void print_collection_t(col_chain_t * c) {
+void print_collection_t(clos_list_t * c) {
     int counter = 0;
     while (c->next) {
         printf("Closure %d", c->c.label);
@@ -521,7 +522,7 @@ static unsigned char SymbolAntiMap[256];
 void init_anti_map(void) {
     unsigned char * anti_map = SymbolAntiMap;
     memset(anti_map, 0, 256);
-    symbol_sets_t * se = &SymbolEntry;
+    symt_list_t * se = &SymbolEntry;
     int counter = 0;
     while (se->next) {
         anti_map[se->entry.id] = counter;
@@ -538,7 +539,7 @@ void write_list_line(closure_t *clos, PyObject *list) {
     goto_list_t *golist = clos->goto_list;
     if (golist) {
         while (golist->next){
-            symbol_entry_t posit = golist->sym_index;
+            sym_ent_t posit = golist->sym_index;
             golabel = golist->closure.label;
             strlen = snprintf( NULL, 0, "%d", golabel );
             posit.flag==NTerm ? snprintf( action, strlen + 1, "%d", golabel ) :
@@ -549,7 +550,7 @@ void write_list_line(closure_t *clos, PyObject *list) {
         }
     }
     // check reduce action in closure items;
-    symbol_entry_t accept_entry = sentry_find(symbol_create(Value, "$"));
+    sym_ent_t accept_entry = sentry_find(symbol_create(Value, "$"));
     pitem_t acc_item = {.body={{0},{1}}, .dot={1}, .follow=accept_entry};
     pitem_t *pitem = clos->items;
     for (int i=0; i<clos->length; i++,pitem++){
@@ -572,12 +573,12 @@ void write_list_line(closure_t *clos, PyObject *list) {
             }
         }
     }
-    free(action);
+    PyMem_Free(action);
     action = NULL;
 }
 
-PyObject * get_states_list(col_chain_t *c, Py_ssize_t length) {
-    col_chain_t *fr, *frxcg;
+PyObject * get_states_list(clos_list_t *c, Py_ssize_t length) {
+    clos_list_t *fr, *frxcg;
     fr=c;
     PyObject * result;
     init_anti_map();
@@ -606,27 +607,27 @@ PyObject * get_states_list(col_chain_t *c, Py_ssize_t length) {
 
     while ((frxcg=fr)!=NULL){
         fr = fr->next;
-        free(frxcg->c.items);
-        free_goto_list(frxcg->c.goto_list);
-        free_symbol_sets(frxcg->c.accept_symbols);
-        free(frxcg);
+        PyMem_Free(frxcg->c.items);
+        PyMem_Free_goto_list(frxcg->c.goto_list);
+        PyMem_Free_symbol_sets(frxcg->c.accept_symbols);
+        PyMem_Free(frxcg);
     }
 
     return result;
 }
 
-void free_goto_list(goto_list_t *lst){
+void PyMem_Free_goto_list(goto_list_t *lst){
     goto_list_t *xcg;
     while ((xcg=lst)!=NULL) {
         lst = lst->next;
-        free(xcg);
+        PyMem_Free(xcg);
     }
 }
 
-void free_symbol_sets(symbol_sets_t *sets){
-    symbol_sets_t *xcg;
+void PyMem_Free_symbol_sets(symt_list_t *sets){
+    symt_list_t *xcg;
     while((xcg=sets)!=NULL){
         sets = sets->next;
-        free(xcg);
+        PyMem_Free(xcg);
     }
 }

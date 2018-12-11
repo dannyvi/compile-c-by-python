@@ -4,11 +4,11 @@
 
 #include <stdlib.h>
 #include <string.h>
-
+#include "Python.h"
 #include "symbol.h"
 
 symbol_table SymbolTable[TBLEN];
-symbol_sets_t SymbolEntry={ {0}, NULL };
+symt_list_t SymbolEntry={ {0}, NULL };
 
 symbol_t symbol_create(sym_type type, char* name) {
     symbol_t sym;
@@ -17,7 +17,7 @@ symbol_t symbol_create(sym_type type, char* name) {
     return sym;
 }
 
-symbol_entry_t sentry_find(symbol_t sym){
+sym_ent_t sentry_find(symbol_t sym){
     int len;
     if (sym.type==NTerm){len=128;}
     else {len=64;}
@@ -38,12 +38,12 @@ symbol_entry_t sentry_find(symbol_t sym){
         }
         if (eq)
         {
-            symbol_entry_t e = {.id=i};
+            sym_ent_t e = {.id=i};
             return e;
         }
     }
 
-    symbol_entry_t n = {.id=255};
+    sym_ent_t n = {.id=255};
     return n;
 }
 
@@ -51,7 +51,7 @@ int SymbolEntry_len(void){
     if (!SymbolEntry.next) { return 0;}
     else {
         int n = 0;
-        symbol_sets_t *count = &SymbolEntry;
+        symt_list_t *count = &SymbolEntry;
         while (count->next) {
             n += 1;
             count = count->next;
@@ -60,16 +60,16 @@ int SymbolEntry_len(void){
     }
 }
 
-void SymbolEntry_push(symbol_entry_t entry) {
+void SymbolEntry_push(sym_ent_t entry) {
     if (!SymbolEntry.next) {
-        symbol_sets_t *next = (symbol_sets_t *) calloc(1, sizeof(symbol_sets_t));
+        symt_list_t *next = (symt_list_t *) PyMem_Calloc(1, sizeof(symt_list_t));
         SymbolEntry.next = next;
         SymbolEntry.entry = entry;
     }
     else {
-        symbol_sets_t *n = &SymbolEntry;
+        symt_list_t *n = &SymbolEntry;
         do {n = n->next;} while (n->next);
-        n -> next = (symbol_sets_t *) calloc(1, sizeof(symbol_sets_t));
+        n -> next = (symt_list_t *) PyMem_Calloc(1, sizeof(symt_list_t));
         n -> entry = entry;
     }
 }
@@ -79,7 +79,7 @@ void SymbolEntry_print(void){
         printf("Empty");
     }
     else {
-        symbol_sets_t *e = &SymbolEntry;
+        symt_list_t *e = &SymbolEntry;
         while (e->next) {
             printf("%d ", e->entry.id);
             e = e->next;
@@ -89,7 +89,7 @@ void SymbolEntry_print(void){
 }
 
 void SymbolTable_add(symbol_t sym) {
-    symbol_entry_t index;
+    sym_ent_t index;
     int len;
     if (sym.type==NTerm){len=128;}
     else {len=64;}

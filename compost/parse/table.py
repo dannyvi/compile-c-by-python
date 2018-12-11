@@ -5,12 +5,13 @@ from compost.parse.atoms import NTerm, Term, Value
 
 
 def gen_syntax_table(grammar, symbols):
-    grtable.init_class(NTerm, Term, Value)
-    grtable.init_symbols(symbols)
+    # grtable.init_class(NTerm, Term, Value)
+    # grtable.init_symbols(symbols)
     _grm = flatten_grammar(grammar)
-    grtable.init_grammar(len(_grm))
-    grtable.build_grammar(_grm)
-    return grtable.gen_syntax_table()
+    return grtable.gen_syntax_table(NTerm, Term, Value, symbols, _grm)
+    # grtable.init_grammar(len(_grm))
+    # grtable.build_grammar(_grm)
+    #return grtable.gen_syntax_table()
 
 # import logging
 # import queue

@@ -1,7 +1,7 @@
 import os
 
 from .lexer import Lexer
-from .parse import SDT
+from .parse.sdt import SDT
 
 gram_filename = os.path.dirname(os.path.abspath(__file__)) + '/gram/a.grammar'
 lex_filename = os.path.dirname(os.path.abspath(__file__)) + '/gram/a.lexeme'
