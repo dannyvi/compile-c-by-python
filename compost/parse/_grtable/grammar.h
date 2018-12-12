@@ -24,21 +24,19 @@ typedef union prod_t {
 } prod_t, pitem_t;
 
 typedef struct pitem_list_t pitem_list_t;
-
 struct pitem_list_t {
     pitem_t item;
     pitem_list_t *next;
 };
 
-
 extern prod_t *GramTable;
 extern size_t GramCount;
 
 void allocate_gram_space(size_t num);
-void PyMem_Free_gram_space(void);
-
+void free_gram_space(void);
 
 pitem_list_t * get_productions(sym_ent_t *sym);
+void free_pitem_list(pitem_list_t * items);
 
 #ifdef __cplusplus
 }

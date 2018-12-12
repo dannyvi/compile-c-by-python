@@ -19,8 +19,9 @@ extern firsts_t * NTFirst;
 
 void init_first_sets(void);
 void allocate_first_sets_space(void);
-//void get_first_sets(sym_ent_t sym, firsts_t * flist);
-sym_ent_list_t  * get_first_sets(sym_ent_t * sym);
+void free_first_sets_space(void) ;
+
+sym_ent_list_t  * get_first_sets(sym_ent_t sym);
 
 #ifdef __cplusplus
 }

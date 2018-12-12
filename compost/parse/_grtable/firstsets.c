@@ -9,7 +9,7 @@ void allocate_first_sets_space(void){
     NTFirst = (firsts_t *) PyMem_Calloc(NTSIZE, sizeof(firsts_t));
 }
 
-void PyMem_Free_first_sets_space(void) {
+void free_first_sets_space(void) {
     PyMem_Free(NTFirst);
     NTFirst = NULL;
 }
@@ -82,24 +82,13 @@ void init_first_sets(void) {
     }
 }
 
-/*
-void get_first_sets(sym_ent_t sym, firsts_t * dst){
-    if (sym.type != NTERM) {
-        *((sym_ent_t*)dst) = sym;
-    }
-    else {
-        firsts_t * src = &NTFirst[sym.index];
-        memcpy(dst, src, NTSIZE);
-    }
-}*/
-
-sym_ent_list_t  * get_first_sets(sym_ent_t * sym){
-    if (sym->type != NTERM){
-        sym_ent_list_t  * s = sym_ent_list_create(sym, 1);
+sym_ent_list_t  * get_first_sets(sym_ent_t sym){
+    if (sym.type != NTERM){
+        sym_ent_list_t  * s = sym_ent_list_create(&sym, 1);
         return s;
     }
     else {
-        int entry = (int) sym->index;
+        int entry = (int) sym.index;
         int counter = 0;
         sym_ent_list_t  *set = PyMem_Calloc(1,sizeof(sym_ent_list_t ));
         sym_ent_list_t  *sp = set;

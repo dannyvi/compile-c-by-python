@@ -11,12 +11,12 @@ extern "C" {
 
 #include "symbol.h"
 #include "grammar.h"
-#include "Python.h"
+//#include "Python.h"
 
 #define NONE_LABEL 100000000
 
 
-pitem_t build_pitem_t(prod_t *prod, sym_ent_t pos, sym_ent_t follow) ;
+pitem_t build_pitem(prod_t *prod, sym_ent_t pos, sym_ent_t follow) ;
 
 
 typedef struct closure_t closure_t;
@@ -32,14 +32,10 @@ struct closure_t {
 };
 
 struct goto_list_t {
-    sym_ent_t sym_index;                     // goto closure by this sym_index;
+    sym_ent_t by_sym_ent;                     // goto closure by this by_sym_ent;
     closure_t closure;                  // goto closure;
     goto_list_t *next;                     // the next goto item.
 };
-
-void PyMem_Free_goto_list(goto_list_t *lst);
-void PyMem_Free_sym_ent_list(sym_ent_list_t *sets);
-
 
 typedef struct nterm_follow_t {
     sym_ent_t nterm;
@@ -48,13 +44,14 @@ typedef struct nterm_follow_t {
 
 typedef struct nf_list_t nf_list_t;
 struct nf_list_t {
-    nterm_follow_t entry;
+    nterm_follow_t pair;
     nf_list_t *next;
 };
 
 closure_t * get_closure(pitem_list_t * clist, int label);
+void free_closure_elems(closure_t * clos);
 
-void add_cl(pitem_t itm, pitem_list_t *clp) ;
+void add_itm(pitem_t itm, pitem_list_t **clp) ;
 
 
 #ifdef __cplusplus

@@ -8,6 +8,6 @@ setup(name='grtable',
                                          '_grtable/closure.c',
                                          '_grtable/collection.c',
                                          '_grtable/firstsets.c',
-                                         # '_grtable/statemap.c',
+                                         '_grtable/statemap.c',
                                          ])]
       )

@@ -11,7 +11,7 @@
 #include "closure.h"
 
 
-pitem_t build_pitem_t(prod_t *prod, sym_ent_t pos, sym_ent_t follow) {
+pitem_t build_pitem(prod_t *prod, sym_ent_t pos, sym_ent_t follow) {
     pitem_t p ;
     p.pnum = prod->pnum;
     p.dot = pos;
@@ -19,9 +19,7 @@ pitem_t build_pitem_t(prod_t *prod, sym_ent_t pos, sym_ent_t follow) {
     return p;
 }
 
-
-int item_in_closure(pitem_t item, pitem_list_t * set){
-    pitem_list_t *l = set;
+int item_in_closure(pitem_t item, pitem_list_t * l){
     while (l->next) {
         if (item.pnum==l->item.pnum) {return 1;}
         l = l->next;
@@ -29,60 +27,53 @@ int item_in_closure(pitem_t item, pitem_list_t * set){
     return 0;
 }
 
-void add_cl(pitem_t itm, pitem_list_t *clp) {
-    clp->item = itm;
-    clp->next = PyMem_Calloc(1, sizeof(pitem_list_t));
+void add_itm(pitem_t itm, pitem_list_t **clp) {
+    (*clp)->item = itm;
+    (*clp)->next = PyMem_Calloc(1, sizeof(pitem_list_t));
+    (*clp) = (*clp)->next;
 }
-
 
 int cmpfunc (const void * a, const void * b) {
-   if ( ((pitem_t*)a)->pnum > ((pitem_t*)b)->pnum ) {return 1;}
-   else {return -1;}
+   return  ((pitem_t*)a)->pnum > ((pitem_t*)b)->pnum ? 1 : -1;
 }
 
-nterm_follow_t new_clos_entry(sym_ent_t nterm, sym_ent_t follow) {
+nterm_follow_t new_nterm_follow(sym_ent_t nterm, sym_ent_t follow) {
     nterm_follow_t c_ent;
     c_ent.nterm = nterm;
     c_ent.follow = follow;
     return c_ent;
 }
 
-int entry_in_clos_sets(nterm_follow_t l, nf_list_t  *c){
-    while (c)
-    {
-        if (c->entry.nterm.index == l.nterm.index &&
-            c->entry.follow.index== l.follow.index){ return 1; }
+static int entry_in_nflist(sym_ent_t nterm, sym_ent_t follow, nf_list_t  *c){
+    while (c) {
+        if (c->pair.nterm.index == nterm.index &&
+            c->pair.follow.index== follow.index){ return 1; }
         c = c->next;
     };
     return 0;
 }
 
-
-void clos_entry_sets_add(nterm_follow_t sym, nf_list_t * s){
-    if (!s->next){
-        s->entry = sym;
-        s->next = PyMem_Calloc(1, sizeof(sym_ent_list_t ));
+void nflist_add(sym_ent_t nterm, sym_ent_t follow, nf_list_t * s){
+    nterm_follow_t pair = new_nterm_follow(nterm, follow) ;
+    while (s->next) {
+        s = s->next;
     }
-    else {
-        while (s->next) {
-            s = s->next;
-        }
-        s->entry = sym;
-        s->next = PyMem_Calloc(1, sizeof(sym_ent_list_t ));
+    s->pair = pair;
+    s->next = PyMem_Calloc(1, sizeof(sym_ent_list_t ));
+}
+
+void free_nflist(nf_list_t *nf){
+    nf_list_t *tmp;
+    while((tmp=nf)!=NULL){
+        nf = nf->next;
+        PyMem_Free(tmp);
     }
 }
 
-static void PyMem_Free_closure_list(pitem_list_t* cl){
-    pitem_list_t * exchg;
-    while((exchg=cl)!=NULL) {
-        cl = cl->next;
-        PyMem_Free(exchg);
-    }
-}
-
-static closure_t * build_closure(pitem_list_t *set, int label, int length, sym_ent_list_t *accept_symbols) {
+static closure_t * build_closure(pitem_list_t *set,
+                                 int label, int length,
+                                 sym_ent_list_t *accept_symbols) {
     closure_t *t = PyMem_Calloc(1, sizeof(closure_t));
-
     t->label = label;
     t->length = length;
     t->items = PyMem_Calloc(length, sizeof(pitem_t));
@@ -97,94 +88,76 @@ static closure_t * build_closure(pitem_list_t *set, int label, int length, sym_e
     return t;
 }
 
-closure_t * get_closure(pitem_list_t * clist, int label) {
-    pitem_list_t *queue, *set, *qp, *countq, *cp, *curr;
+void free_closure_elems(closure_t * clos){
+    PyMem_Free(clos->items);
+    sym_ent_list_t * tmp, *acc=clos->accept_symbols;
+    while((tmp=acc)!=NULL){
+        acc = acc->next;
+        PyMem_Free(tmp);
+    }
+    goto_list_t * tmpg, *golist = clos->goto_list;
+    while((tmpg=golist)!=NULL){
+        golist = golist->next;
+        PyMem_Free(tmpg);
+    }
+}
+
+closure_t * get_closure(pitem_list_t * queue, int label) {
+    pitem_list_t  *qtail, *qiter;
     sym_ent_list_t *accept_symbols = new_sym_ent_list();
     nf_list_t *added = PyMem_Calloc(1, sizeof(nf_list_t));
-    cp = clist;
-    queue = PyMem_Calloc(1, sizeof(pitem_list_t));
-    set = queue; //PyMem_Calloc(1, sizeof(pitem_list_t));
-    qp = queue;
+    qtail = queue;
     int length = 0;
-    while (cp->next) {
-        add_cl(cp->item, qp);
-        qp = qp->next;
+    while (qtail->next) {
+        qtail = qtail->next;
         length += 1;
-        cp = cp->next;
     }
 
-    PyMem_Free_closure_list(clist);
-    countq = queue;
-    while (countq->next) {
-        pitem_t item = countq->item;
-        sym_ent_t sentry =item.body[(int)item.dot.index+1];
+    qiter = queue;
+    while (qiter->next) {
+        pitem_t item = qiter->item;
+        sym_ent_t sym =item.body[(int)item.dot.index+1];
         //add accept input symbols.
-        if (!entry_in_sym_ent_list(sentry, accept_symbols)){
-            sym_ent_list_add(sentry, accept_symbols);
+        if (!entry_in_sym_ent_list(sym, accept_symbols)){
+            sym_ent_list_add(sym, accept_symbols);
         }
-
         //add productions.
-        if (sentry.index && sentry.type==NTERM) {
-            sym_ent_t suffix;
-            if(item.body[(int)(item.dot.index + 2)].index){
-                suffix = item.body[(int)(item.dot.index + 2)];
-            } else {
-                suffix = item.follow;
-            }
-            sym_ent_list_t  *tms = get_first_sets(&suffix);
-            sym_ent_list_t  *itert, *frtms;
+        if (sym.index && sym.type==NTERM) {
+            sym_ent_t suffix = item.body[item.dot.index + 2].index ?
+                               item.body[item.dot.index + 2] : item.follow;
+            sym_ent_list_t  *terminals = get_first_sets(suffix);
+            sym_ent_list_t  *itert = terminals;
             sym_ent_t posit;
             posit.index = 0;
-            itert = tms;
             while (itert->next) {
-                nterm_follow_t c_ent = new_clos_entry(sentry, itert->entry);
-                if (!entry_in_clos_sets(c_ent, added)){
-                    clos_entry_sets_add(c_ent, added);
-                    pitem_list_t *prods = get_productions(&sentry);
-                    pitem_list_t *frprd, *chgfr;
-                    frprd = prods;
-                    while(prods->next) {
-                        pitem_t newitem = build_pitem_t(&(prods->item), posit, itert->entry);
-                        //if (!item_in_closure(newitem, set)) {
-                            add_cl(newitem, qp);
-                            qp = qp->next;
-                            length += 1;
-                        //}
-                        prods = prods->next;
+                if (!entry_in_nflist(sym, itert->entry, added)){
+                    nflist_add(sym, itert->entry, added);
+                    pitem_list_t *prods = get_productions(&sym);
+                    pitem_list_t *iterp = prods;
+                    while(iterp->next) {
+                        pitem_t newitem = build_pitem(&(iterp->item),
+                                                      posit, itert->entry);
+                        add_itm(newitem, &qtail);
+                        length += 1;
+                        iterp = iterp->next;
                     }
                     // PyMem_Free productions chain;
-                    while((chgfr=frprd)!=NULL){
-                        frprd = frprd->next;
-                        PyMem_Free(chgfr);
-                    }
-                    prods=chgfr=frprd=NULL;
+                    free_pitem_list(prods);
+                    prods=iterp=NULL;
                 }
                 itert = itert->next;
             }
-            // PyMem_Free terminals chain;
-            while((frtms=tms)!=NULL){
-                tms = tms->next;
-                PyMem_Free(frtms);
-            }
-            tms=frtms=itert=NULL;
+            free_sym_ent_list(terminals);
+            terminals=itert=NULL;
         }
-        countq = countq->next;
+        qiter = qiter->next;
     }
 
-    closure_t *t = build_closure(set, label, length, accept_symbols);
-
-    while ((curr = queue) != NULL) {
-        queue = queue->next;
-        PyMem_Free (curr);
-    }
-    queue=set=qp=countq=cp=curr=NULL;
-
-    nf_list_t *fradded ;
-    while((fradded=added)!=NULL){
-        added = added->next;
-        PyMem_Free(fradded);
-    }
-
+    closure_t *t = build_closure(queue, label, length, accept_symbols);
+    free_pitem_list(queue);
+    queue=qtail=qiter=NULL;
+    free_nflist(added);
+    added = NULL;
     return t;
 }
 

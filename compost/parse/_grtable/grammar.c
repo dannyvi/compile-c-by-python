@@ -15,7 +15,7 @@ void allocate_gram_space(size_t num){
     GramCount = num;
 }
 
-void PyMem_Free_gram_space(void){
+void free_gram_space(void){
     PyMem_Free(GramTable);
     GramTable = NULL;
     GramCount = 0;
@@ -26,7 +26,6 @@ pitem_list_t * get_productions(sym_ent_t *sym){
     pitem_list_t *pl = PyMem_Calloc(1, sizeof(pitem_list_t));
     pitem_list_t *result = pl;
     for (size_t i=0;i<GramCount;i++) {
-
         if (GramTable[i].body[0].index==sym->index) {
             pl->item = GramTable[i];
             pl->next = PyMem_Calloc(1, sizeof(pitem_list_t));
@@ -36,3 +35,10 @@ pitem_list_t * get_productions(sym_ent_t *sym){
     return result;
 }
 
+void free_pitem_list(pitem_list_t * items){
+    pitem_list_t * tmp;
+    while ((tmp=items)!=NULL){
+        items = items->next;
+        PyMem_Free(tmp);
+    }
+}

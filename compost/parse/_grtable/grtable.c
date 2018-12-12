@@ -9,7 +9,7 @@
 #include "closure.h"
 #include "firstsets.h"
 #include "collection.h"
-//#include "statemap.h"
+#include "statemap.h"
 
 /*   should be called by grtable.gen_syntax_table(NT, T, V, grm, symbols)
  *   return the syntax table.
@@ -120,16 +120,15 @@ PyObject* grtable_gen_syntax_table(PyObject* self, PyObject* args) {
         l = l->next;
         length += 1;
     }
-    //print_collection_t(coln);
     PyObject *  result = get_states_list(coln, length);
+    free_closure_collection(coln);
+
+    free_first_sets_space();
+    free_gram_space();
+    free_symbol_space();
+
     return result;
-    //clos_list_t * cc = closure_collection();
-    //Py_ssize_t length = len(cc);
-    //return get_states_list(cc, length);
 
-
-    //Py_INCREF(Py_None);
-    //return Py_None;
 }
 
 

@@ -71,10 +71,17 @@ sym_ent_list_t  * sym_ent_list_create(sym_ent_t syms[], size_t size){
 }
 
 int entry_in_sym_ent_list(sym_ent_t sym, sym_ent_list_t  *c){
-    //sym_ent_list_t  *c = ss;
-    do {
+    while (c){
         if (c->entry.index == sym.index){ return 1; }
         c = c->next;
-    } while (c);
+    };
     return 0;
+}
+
+void free_sym_ent_list(sym_ent_list_t * elist) {
+    sym_ent_list_t * tmp;
+    while((tmp=elist)!=NULL){
+        elist = elist->next;
+        PyMem_Free(tmp);
+    }
 }

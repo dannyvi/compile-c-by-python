@@ -48,7 +48,7 @@ void sym_ent_list_add(sym_ent_t sym, sym_ent_list_t * sets);
 sym_ent_list_t  * new_sym_ent_list(void);
 sym_ent_list_t  * sym_ent_list_create(sym_ent_t syms[], size_t size);
 int entry_in_sym_ent_list(sym_ent_t sym, sym_ent_list_t  *c);
-
+void free_sym_ent_list(sym_ent_list_t * elist) ;
 
 #ifdef __cplusplus
 }
