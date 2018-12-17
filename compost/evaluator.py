@@ -1,9 +1,10 @@
-import llvmlite.binding as llvm
 from ctypes import CFUNCTYPE, c_int32
 
+import llvmlite.binding as llvm
+
 from .generator import LLVMCodeGenerator
-from .parser import Parser
 from .parse import ast as astree
+from .parser import Parser
 
 
 class Evaluator:
@@ -50,5 +51,5 @@ class Evaluator:
 
             fptr = CFUNCTYPE(c_int32)(ee.get_function_address(ast.proto.name))
 
-            result = fptr(1)
+            result = fptr(4, 7)
             return result

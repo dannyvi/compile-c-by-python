@@ -1,8 +1,4 @@
-#from compost.parser import Parser
-#from compost.generator import LLVMCodeGenerator
 from compost.evaluator import Evaluator
-import os
-import pytest
 
 
 def test_expression():
@@ -12,8 +8,5 @@ def test_expression():
     ev = Evaluator()
     print(ev.evaluate(stream, optimize=True, llvmdump=True))
     print(ev.evaluate('int suba (int b) { 4 + 2}', llvmdump=True))
-    print(f"""Evaluate add11(3) {ev.evaluate('add11(3)')}""")
-    #ast, symbol_table = parser.parse_stream(stream)
-    #generator = LLVMCodeGenerator()
-    #generator.generate_code(ast)
-    #print(str(generator.module))
+    print(
+        f"""Evaluate add11(3) {ev.evaluate('add11(5)', optimize=True, llvmdump=True)}""")

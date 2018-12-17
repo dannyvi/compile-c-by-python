@@ -3,8 +3,9 @@ import os
 from .lexer import Lexer
 from .parse.sdt import SDT
 
-gram_filename = os.path.dirname(os.path.abspath(__file__)) + '/gram/a.grammar'
-lex_filename = os.path.dirname(os.path.abspath(__file__)) + '/gram/a.lexeme'
+gram_filename = os.path.dirname(
+    os.path.abspath(__file__)) + '/gram/ansic.grammar'
+lex_filename = os.path.dirname(os.path.abspath(__file__)) + '/gram/ansic.lexeme'
 
 
 class Parser:

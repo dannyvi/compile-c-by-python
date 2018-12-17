@@ -2,5 +2,5 @@
 doc/_build/
 .coverage
 cov_html/
-compost/parse/build/
+compost/parse/_grtable/build/
 */__pycache__/*

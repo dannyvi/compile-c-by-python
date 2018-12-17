@@ -1,17 +1,8 @@
-"""Tokenizer.
-
-Could parse:
-
-::
-
-    etc
-
-"""
 
 import os
 import re
 
-lex_fp = os.path.dirname(os.path.abspath(__file__)) + '/gram/a.lexeme'
+lex_fp = os.path.dirname(os.path.abspath(__file__)) + '/gram/ansic.lexeme'
 
 
 class Token:

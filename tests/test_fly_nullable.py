@@ -1,10 +1,8 @@
-from compfly.parse.loader import load_grammar, eliminate_null_production
-from compfly.parse.table import closure_collection, gen_syntax_table
-from compfly.parse.sdt import SDT
-from compfly.lexer import Lexer
-from compfly.parser import Parser
 import os
 
+from compfly.parse.loader import load_grammar
+from compfly.parse.table import closure_collection, gen_syntax_table
+from compfly.parser import Parser
 
 gram_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                              'nullable.grammar')
@@ -22,12 +20,6 @@ def test_productions():
     for n, i in enumerate(grammar):
         body = ('{} '*len(i.body)).format(*i.body)
         print(f"{n} {i.head} -> {body}")
-    #new_g = eliminate_null_production(grammar)
-    #print("\nNew grammar\n")
-    #for i in new_g:
-    #    print(i)
-    #g = closure_collection(grammar, all_symbols)
-    #print(g)
 
 
 def test_grammars():

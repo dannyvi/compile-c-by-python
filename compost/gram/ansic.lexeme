@@ -1,9 +1,9 @@
 FLOAT_CONSTANT   :=  r'\d+\.\d*'    # numbers
 INTEGER_CONSTANT :=  r'\d+'    # numbers
 CHARACTER_CONSTANT := r'".+?"'
-ASSIGN_OP   :=  r'\|=|^=|&=|>>=|<<=|-=|+=|%=|/=|*='
-EXPR_OP     :=  r'\|\||&&|==|!=|<=|>=|<<|>>|++|--|->|\.|^|<|>|/|%'
-UNARY_OP    :=  r'&|*|+|-|~|!'
+ASSIGN_OP   :=  r'\|=|^=|&=|>>=|<<=|-=|\+=|%=|/=|\*='
+EXPR_OP     :=  r'\|\||&&|==|!=|<=|>=|<<|>>|\+\+|--|->|\.|\^|<|>|/|%'
+UNARY_OP    :=  r'&|\*|\+|-|~|!'
 ASSIGN      :=  r'='
 STORAGE_CLASS_SPECIFIER := r'auto|register|static|extern|typedef'
 TYPE_SPECIFIER := r'void|char|short|int|long|float|double|signed|unsigned'

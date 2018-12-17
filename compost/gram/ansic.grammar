@@ -2,337 +2,337 @@ start
   :== translation-unit                                 {{start}}
 
 translation-unit
-  :== external-declaration                              {{translation_func}}
-    | translation-unit external-declaration {{translation_func}}
+  :== external-declaration                              {{not_implemented_func}}
+    | translation-unit external-declaration {{not_implemented_func}}
 
 external-declaration
-  :== function-definition {{translation_func}}
-    | declaration {{translation_func}}
+  :== function-definition {{not_implemented_func}}
+    | declaration {{not_implemented_func}}
 
 function-definition
-  :==                        declarator                  compound-statement {{translation_func}}
-    | declaration-specifiers declarator declaration-list compound-statement {{translation_func}}
-    |                        declarator declaration-list compound-statement {{translation_func}}
-    | declaration-specifiers declarator                  compound-statement {{translation_func}}
+  :==                        declarator                  compound-statement {{not_implemented_func}}
+    | declaration-specifiers declarator declaration-list compound-statement {{not_implemented_func}}
+    |                        declarator declaration-list compound-statement {{not_implemented_func}}
+    | declaration-specifiers declarator                  compound-statement {{not_implemented_func}}
 
 declaration
-  :== declaration-specifiers init-declarator-list ';' {{translation_func}}
-    | declaration-specifiers ';' {{translation_func}}
+  :== declaration-specifiers init-declarator-list ';' {{not_implemented_func}}
+    | declaration-specifiers ';' {{not_implemented_func}}
 
 declaration-list
-  :== declaration {{translation_func}}
-    | declaration-list declaration {{translation_func}}
+  :== declaration {{not_implemented_func}}
+    | declaration-list declaration {{not_implemented_func}}
 
 declaration-specifiers
-  :== STORAGE_CLASS_SPECIFIER declaration-specifiers {{translation_func}}
-    | STORAGE_CLASS_SPECIFIER {{translation_func}}
-    | type-specifier declaration-specifiers {{translation_func}}
-    | type-specifier {{translation_func}}
-    | TYPE_QUALIFIER declaration-specifiers {{translation_func}}
-    | TYPE_QUALIFIER {{translation_func}}
+  :== STORAGE_CLASS_SPECIFIER declaration-specifiers {{not_implemented_func}}
+    | STORAGE_CLASS_SPECIFIER {{not_implemented_func}}
+    | type-specifier declaration-specifiers {{not_implemented_func}}
+    | type-specifier {{not_implemented_func}}
+    | TYPE_QUALIFIER declaration-specifiers {{not_implemented_func}}
+    | TYPE_QUALIFIER {{not_implemented_func}}
 
 #STORAGE_CLASS_SPECIFIER
-#  :== "auto" {{translation_func}}
-#    | "register" {{translation_func}}
-#    | "static" {{translation_func}}
-#    | "extern" {{translation_func}}
-#    | "typedef" {{translation_func}}
+#  :== "auto" {{not_implemented_func}}
+#    | "register" {{not_implemented_func}}
+#    | "static" {{not_implemented_func}}
+#    | "extern" {{not_implemented_func}}
+#    | "typedef" {{not_implemented_func}}
 
 type-specifier
-  :== TYPE_SPECIFIER {{translation_func}}
-  #  "void" {{translation_func}}
-  #  | "char" {{translation_func}}
-  #  | "short" {{translation_func}}
-  #  | "int" {{translation_func}}
-  #  | "long" {{translation_func}}
-  #  | "float" {{translation_func}}
-  #  | "double" {{translation_func}}
-  #  | "signed" {{translation_func}}
-  #  | "unsigned" {{translation_func}}
-    | struct-or-union-specifier {{translation_func}}
-    | enum-specifier {{translation_func}}
-    | typedef-name {{translation_func}}
+  :== TYPE_SPECIFIER {{not_implemented_func}}
+  #  "void" {{not_implemented_func}}
+  #  | "char" {{not_implemented_func}}
+  #  | "short" {{not_implemented_func}}
+  #  | "int" {{not_implemented_func}}
+  #  | "long" {{not_implemented_func}}
+  #  | "float" {{not_implemented_func}}
+  #  | "double" {{not_implemented_func}}
+  #  | "signed" {{not_implemented_func}}
+  #  | "unsigned" {{not_implemented_func}}
+    | struct-or-union-specifier {{not_implemented_func}}
+    | enum-specifier {{not_implemented_func}}
+    | typedef-name {{not_implemented_func}}
 
 #TYPE_QUALIFIER
-#  :== "const" {{translation_func}}
-#    | "volatile" {{translation_func}}
+#  :== "const" {{not_implemented_func}}
+#    | "volatile" {{not_implemented_func}}
 
 struct-or-union-specifier
-  :== STRUCT_OR_UNION ID '{' struct-declaration-list '}' {{translation_func}}
-    | STRUCT_OR_UNION '{' struct-declaration-list '}' {{translation_func}}
-    | STRUCT_OR_UNION ID {{translation_func}}
+  :== STRUCT_OR_UNION ID '{' struct-declaration-list '}' {{not_implemented_func}}
+    | STRUCT_OR_UNION '{' struct-declaration-list '}' {{not_implemented_func}}
+    | STRUCT_OR_UNION ID {{not_implemented_func}}
 
 #STRUCT_OR_UNION
-#  :== "struct" {{translation_func}}
-#    | "union" {{translation_func}}
+#  :== "struct" {{not_implemented_func}}
+#    | "union" {{not_implemented_func}}
 
 struct-declaration-list
-  :== struct-declaration {{translation_func}}
-    | struct-declaration-list struct-declaration {{translation_func}}
+  :== struct-declaration {{not_implemented_func}}
+    | struct-declaration-list struct-declaration {{not_implemented_func}}
 
 init-declarator-list
-  :== init-declarator {{translation_func}}
-    | init-declarator-list "," init-declarator {{translation_func}}
+  :== init-declarator {{not_implemented_func}}
+    | init-declarator-list "," init-declarator {{not_implemented_func}}
 
 init-declarator
-  :== declarator {{translation_func}}
-    | declarator "=" initializer {{translation_func}}
+  :== declarator {{not_implemented_func}}
+    | declarator "=" initializer {{not_implemented_func}}
 
 struct-declaration
-  :== specifier-qualifier-list struct-declarator-list ";" {{translation_func}}
+  :== specifier-qualifier-list struct-declarator-list ";" {{not_implemented_func}}
 
 specifier-qualifier-list
-  :== type-specifier specifier-qualifier-list {{translation_func}}
-    | type-specifier {{translation_func}}
-    | TYPE_QUALIFIER specifier-qualifier-list {{translation_func}}
-    | TYPE_QUALIFIER {{translation_func}}
+  :== type-specifier specifier-qualifier-list {{not_implemented_func}}
+    | type-specifier {{not_implemented_func}}
+    | TYPE_QUALIFIER specifier-qualifier-list {{not_implemented_func}}
+    | TYPE_QUALIFIER {{not_implemented_func}}
 
 struct-declarator-list
-  :== struct-declarator {{translation_func}}
-    | struct-declarator-list "," struct-declarator {{translation_func}}
+  :== struct-declarator {{not_implemented_func}}
+    | struct-declarator-list "," struct-declarator {{not_implemented_func}}
 
 struct-declarator
-  :== declarator {{translation_func}}
-    | declarator ":" constant-expression {{translation_func}}
-    | ":" constant-expression {{translation_func}}
+  :== declarator {{not_implemented_func}}
+    | declarator ":" constant-expression {{not_implemented_func}}
+    | ":" constant-expression {{not_implemented_func}}
 
 enum-specifier
-  :== "enum" ID "{" enumerator-list "}" {{translation_func}}
-    | "enum" "{" enumerator "}" {{translation_func}}
-    | "enum" ID {{translation_func}}
+  :== "enum" ID "{" enumerator-list "}" {{not_implemented_func}}
+    | "enum" "{" enumerator "}" {{not_implemented_func}}
+    | "enum" ID {{not_implemented_func}}
 
 enumerator-list
-  :== enumerator {{translation_func}}
-    | enumerator-list "," enumerator {{translation_func}}
+  :== enumerator {{not_implemented_func}}
+    | enumerator-list "," enumerator {{not_implemented_func}}
 
 enumerator
-  :== ID {{translation_func}}
-    | ID "=" constant-expression {{translation_func}}
+  :== ID {{not_implemented_func}}
+    | ID "=" constant-expression {{not_implemented_func}}
 
 declarator
-  :== pointer direct-declarator {{translation_func}}
-    | direct-declarator {{translation_func}}
+  :== pointer direct-declarator {{not_implemented_func}}
+    | direct-declarator {{not_implemented_func}}
 
 direct-declarator
-  :== ID {{translation_func}}
-    | "(" declarator ")" {{translation_func}}
-    | direct-declarator "[" constant-expression "]" {{translation_func}}
-    | direct-declarator "[" "]" {{translation_func}}
-    | direct-declarator "(" parameter-type-list ")" {{translation_func}}
-    | direct-declarator "(" ID-list ")" {{translation_func}}
-    | direct-declarator "(" ")" {{translation_func}}
+  :== ID {{not_implemented_func}}
+    | "(" declarator ")" {{not_implemented_func}}
+    | direct-declarator "[" constant-expression "]" {{not_implemented_func}}
+    | direct-declarator "[" "]" {{not_implemented_func}}
+    | direct-declarator "(" parameter-type-list ")" {{not_implemented_func}}
+    | direct-declarator "(" ID-list ")" {{not_implemented_func}}
+    | direct-declarator "(" ")" {{not_implemented_func}}
 
 pointer
-  :== "*" type-qualifier-list {{translation_func}}
-    | "*" {{translation_func}}
-    | "*" type-qualifier-list pointer {{translation_func}}
-    | "*" pointer {{translation_func}}
+  :== "*" type-qualifier-list {{not_implemented_func}}
+    | "*" {{not_implemented_func}}
+    | "*" type-qualifier-list pointer {{not_implemented_func}}
+    | "*" pointer {{not_implemented_func}}
 
 type-qualifier-list
-  :== TYPE_QUALIFIER {{translation_func}}
-    | type-qualifier-list TYPE_QUALIFIER {{translation_func}}
+  :== TYPE_QUALIFIER {{not_implemented_func}}
+    | type-qualifier-list TYPE_QUALIFIER {{not_implemented_func}}
 
 parameter-type-list
-  :== parameter-list {{translation_func}}
-    | parameter-list "," "..." {{translation_func}}
+  :== parameter-list {{not_implemented_func}}
+    | parameter-list "," "..." {{not_implemented_func}}
 
 parameter-list
-  :== parameter-declaration {{translation_func}}
-    | parameter-list "," parameter-declaration {{translation_func}}
+  :== parameter-declaration {{not_implemented_func}}
+    | parameter-list "," parameter-declaration {{not_implemented_func}}
 
 parameter-declaration
-  :== declaration-specifiers declarator {{translation_func}}
-    | declaration-specifiers abstruct-declarator {{translation_func}}
-    | declaration-specifiers {{translation_func}}
+  :== declaration-specifiers declarator {{not_implemented_func}}
+    | declaration-specifiers abstruct-declarator {{not_implemented_func}}
+    | declaration-specifiers {{not_implemented_func}}
 
 ID-list
-  :== ID {{translation_func}}
-    | ID-list "," ID {{translation_func}}
+  :== ID {{not_implemented_func}}
+    | ID-list "," ID {{not_implemented_func}}
 
 initializer
-  :== assignment-expression {{translation_func}}
-    | "{" initializer-list "}" {{translation_func}}
-    | "{" initializer-list "," "}" {{translation_func}}
+  :== assignment-expression {{not_implemented_func}}
+    | "{" initializer-list "}" {{not_implemented_func}}
+    | "{" initializer-list "," "}" {{not_implemented_func}}
 
 initializer-list
-  :== initializer {{translation_func}}
-    | initializer-list "," initializer {{translation_func}}
+  :== initializer {{not_implemented_func}}
+    | initializer-list "," initializer {{not_implemented_func}}
 
 type-name
-  :== specifier-qualifier-list abstruct-declarator {{translation_func}}
-    | specifier-qualifier-list {{translation_func}}
+  :== specifier-qualifier-list abstruct-declarator {{not_implemented_func}}
+    | specifier-qualifier-list {{not_implemented_func}}
 
 abstruct-declarator
-  :== pointer {{translation_func}}
-    | pointer direct-abstruct-declarator {{translation_func}}
-    |         direct-abstruct-declarator {{translation_func}}
+  :== pointer {{not_implemented_func}}
+    | pointer direct-abstruct-declarator {{not_implemented_func}}
+    |         direct-abstruct-declarator {{not_implemented_func}}
 
 direct-abstruct-declarator
-  :== "(" abstruct-declarator ")" {{translation_func}}
-    | direct-abstruct-declarator "[" constant-expression "]" {{translation_func}}
-    | "[" constant-expression "]" {{translation_func}}
-    | direct-abstruct-declarator "[" "]" {{translation_func}}
-    | "[" "]" {{translation_func}}
-    | direct-abstruct-declarator "(" parameter-type-list ")" {{translation_func}}
-    | "(" parameter-type-list ")" {{translation_func}}
-    | "(" ")" {{translation_func}}
-    | direct-abstruct-declarator "(" ")" {{translation_func}}
+  :== "(" abstruct-declarator ")" {{not_implemented_func}}
+    | direct-abstruct-declarator "[" constant-expression "]" {{not_implemented_func}}
+    | "[" constant-expression "]" {{not_implemented_func}}
+    | direct-abstruct-declarator "[" "]" {{not_implemented_func}}
+    | "[" "]" {{not_implemented_func}}
+    | direct-abstruct-declarator "(" parameter-type-list ")" {{not_implemented_func}}
+    | "(" parameter-type-list ")" {{not_implemented_func}}
+    | "(" ")" {{not_implemented_func}}
+    | direct-abstruct-declarator "(" ")" {{not_implemented_func}}
 
 typedef-name
-  :== ID {{translation_func}}
+  :== ID {{not_implemented_func}}
 
 statement
-  :== labeled-statement {{translation_func}}
-    | expression-statement {{translation_func}}
-    | compound-statement {{translation_func}}
-    | selection-statement {{translation_func}}
-    | iteration-statement {{translation_func}}
-    | jump-statement {{translation_func}}
+  :== labeled-statement {{not_implemented_func}}
+    | expression-statement {{not_implemented_func}}
+    | compound-statement {{not_implemented_func}}
+    | selection-statement {{not_implemented_func}}
+    | iteration-statement {{not_implemented_func}}
+    | jump-statement {{not_implemented_func}}
 
 labeled-statement
-  :== ID ":" statement {{translation_func}}
-    | "case" constant-expression ":" statement {{translation_func}}
-    | "default" ":" statement {{translation_func}}
+  :== ID ":" statement {{not_implemented_func}}
+    | "case" constant-expression ":" statement {{not_implemented_func}}
+    | "default" ":" statement {{not_implemented_func}}
 
 expression-statement
-  :== expression ";" {{translation_func}}
-    | ";" {{translation_func}}
+  :== expression ";" {{not_implemented_func}}
+    | ";" {{not_implemented_func}}
 
 compound-statement
-  :== "{" declaration-list statement-list "}" {{translation_func}}
-    | "{" declaration-list "}" {{translation_func}}
-    | "{" statement-list "}" {{translation_func}}
-    | "{" "}" {{translation_func}}
+  :== "{" declaration-list statement-list "}" {{not_implemented_func}}
+    | "{" declaration-list "}" {{not_implemented_func}}
+    | "{" statement-list "}" {{not_implemented_func}}
+    | "{" "}" {{not_implemented_func}}
 
 statement-list
-  :== statement {{translation_func}}
-    | statement-list statement {{translation_func}}
+  :== statement {{not_implemented_func}}
+    | statement-list statement {{not_implemented_func}}
 
 selection-statement
-  :== "if" "(" expression ")" statement {{translation_func}}
-    | "if" "(" expression ")" statement "else" statement {{translation_func}}
-    | "switch" "(" expression ")" statement {{translation_func}}
+  :== "if" "(" expression ")" statement {{not_implemented_func}}
+    | "if" "(" expression ")" statement "else" statement {{not_implemented_func}}
+    | "switch" "(" expression ")" statement {{not_implemented_func}}
 
 iteration-statement
-  :== "while" "(" expression ")" statement {{translation_func}}
-    | "do" statement "while" "(" expression ")" ";" {{translation_func}}
-    | "for" "(" expression ";" expression ";" expression ")" statement {{translation_func}}
+  :== "while" "(" expression ")" statement {{not_implemented_func}}
+    | "do" statement "while" "(" expression ")" ";" {{not_implemented_func}}
+    | "for" "(" expression ";" expression ";" expression ")" statement {{not_implemented_func}}
 
 jump-statement
-  :== "goto" ID ";" {{translation_func}}
-    | "continue" ";" {{translation_func}}
-    | "break" ";" {{translation_func}}
-    | "return" expression ";" {{translation_func}}
-    | "return" ";" {{translation_func}}
+  :== "goto" ID ";" {{not_implemented_func}}
+    | "continue" ";" {{not_implemented_func}}
+    | "break" ";" {{not_implemented_func}}
+    | "return" expression ";" {{not_implemented_func}}
+    | "return" ";" {{not_implemented_func}}
 
 expression
-  :== assignment-expression {{translation_func}}
-    | expression "," assignment-expression {{translation_func}}
+  :== assignment-expression {{not_implemented_func}}
+    | expression "," assignment-expression {{not_implemented_func}}
 
 assignment-expression
-  :== conditional-expression {{translation_func}}
-    | unary-expression ASSIGN_OP assignment-expression {{translation_func}}
-    | unary-expression ASSIGN assignment-expression {{translation_func}}
+  :== conditional-expression {{not_implemented_func}}
+    | unary-expression ASSIGN_OP assignment-expression {{not_implemented_func}}
+    | unary-expression ASSIGN assignment-expression {{not_implemented_func}}
 
 conditional-expression
-  :== logical-OR-expression {{translation_func}}
-    | logical-OR-expression "?" expression ":" conditional-expression {{translation_func}}
+  :== logical-OR-expression {{not_implemented_func}}
+    | logical-OR-expression "?" expression ":" conditional-expression {{not_implemented_func}}
 
 constant-expression
-  :== conditional-expression {{translation_func}}
+  :== conditional-expression {{not_implemented_func}}
 
 logical-OR-expression
-  :== logical-AND-expression {{translation_func}}
-    | logical-OR-expression "||" logical-AND-expression {{translation_func}}
+  :== logical-AND-expression {{not_implemented_func}}
+    | logical-OR-expression "||" logical-AND-expression {{not_implemented_func}}
 
 logical-AND-expression
-  :== inclusive-OR-expression {{translation_func}}
-    | logical-AND-expression "&&" inclusive-OR-expression {{translation_func}}
+  :== inclusive-OR-expression {{not_implemented_func}}
+    | logical-AND-expression "&&" inclusive-OR-expression {{not_implemented_func}}
 
 inclusive-OR-expression
-  :== exclusive-OR-expression {{translation_func}}
-    | inclusive-OR-expression "|" exclusive-OR-expression {{translation_func}}
+  :== exclusive-OR-expression {{not_implemented_func}}
+    | inclusive-OR-expression "|" exclusive-OR-expression {{not_implemented_func}}
 
 exclusive-OR-expression
-  :== AND-expression {{translation_func}}
-    | exclusive-OR-expression "^" AND-expression {{translation_func}}
+  :== AND-expression {{not_implemented_func}}
+    | exclusive-OR-expression "^" AND-expression {{not_implemented_func}}
 
 AND-expression
-  :== equality-expression {{translation_func}}
-    | AND-expression "&" equality-expression {{translation_func}}
+  :== equality-expression {{not_implemented_func}}
+    | AND-expression "&" equality-expression {{not_implemented_func}}
 
 equality-expression
-  :== relational-expression {{translation_func}}
-    | equality-expression "==" relational-expression {{translation_func}}
-    | equality-expression "!=" relational-expression {{translation_func}}
+  :== relational-expression {{not_implemented_func}}
+    | equality-expression "==" relational-expression {{not_implemented_func}}
+    | equality-expression "!=" relational-expression {{not_implemented_func}}
 
 relational-expression
-  :== shift-expression {{translation_func}}
-    | relational-expression "<" shift-expression {{translation_func}}
-    | relational-expression ">" shift-expression {{translation_func}}
-    | relational-expression "<=" shift-expression {{translation_func}}
-    | relational-expression ">=" shift-expression {{translation_func}}
+  :== shift-expression {{not_implemented_func}}
+    | relational-expression "<" shift-expression {{not_implemented_func}}
+    | relational-expression ">" shift-expression {{not_implemented_func}}
+    | relational-expression "<=" shift-expression {{not_implemented_func}}
+    | relational-expression ">=" shift-expression {{not_implemented_func}}
 
 shift-expression
-  :== additive-expression {{translation_func}}
-    | shift-expression "<<" additive-expression {{translation_func}}
-    | shift-expression ">>" additive-expression {{translation_func}}
+  :== additive-expression {{not_implemented_func}}
+    | shift-expression "<<" additive-expression {{not_implemented_func}}
+    | shift-expression ">>" additive-expression {{not_implemented_func}}
 
 additive-expression
-  :== multiplicative-expression {{translation_func}}
-    | additive-expression "+" multiplicative-expression {{translation_func}}
-    | additive-expression "-" multiplicative-expression {{translation_func}}
+  :== multiplicative-expression {{not_implemented_func}}
+    | additive-expression "+" multiplicative-expression {{not_implemented_func}}
+    | additive-expression "-" multiplicative-expression {{not_implemented_func}}
 
 multiplicative-expression
-  :== cast-expression {{translation_func}}
-    | multiplicative-expression "*" cast-expression {{translation_func}}
-    | multiplicative-expression "/" cast-expression {{translation_func}}
-    | multiplicative-expression "%" cast-expression {{translation_func}}
+  :== cast-expression {{not_implemented_func}}
+    | multiplicative-expression "*" cast-expression {{not_implemented_func}}
+    | multiplicative-expression "/" cast-expression {{not_implemented_func}}
+    | multiplicative-expression "%" cast-expression {{not_implemented_func}}
 
 cast-expression
-  :== unary-expression {{translation_func}}
-    | "(" type-name ")" cast-expression {{translation_func}}
+  :== unary-expression {{not_implemented_func}}
+    | "(" type-name ")" cast-expression {{not_implemented_func}}
 
 unary-expression
-  :== postfix-expression {{translation_func}}
-    | "++" unary-expression {{translation_func}}
-    | "--" unary-expression {{translation_func}}
-    | UNARY_OP cast-expression {{translation_func}}
-    | "sizeof" unary-expression {{translation_func}}
-    | "sizeof" "(" type-name ")" {{translation_func}}
+  :== postfix-expression {{not_implemented_func}}
+    | "++" unary-expression {{not_implemented_func}}
+    | "--" unary-expression {{not_implemented_func}}
+    | UNARY_OP cast-expression {{not_implemented_func}}
+    | "sizeof" unary-expression {{not_implemented_func}}
+    | "sizeof" "(" type-name ")" {{not_implemented_func}}
 
 postfix-expression
-  :== primary-expression {{translation_func}}
-    | postfix-expression "[" expression "]" {{translation_func}}
-    | postfix-expression "(" argument-expression-list ")" {{translation_func}}
-    | postfix-expression "(" ")" {{translation_func}}
-    | postfix-expression "." ID {{translation_func}}
-    | postfix-expression "->" ID {{translation_func}}
-    | postfix-expression "++" {{translation_func}}
-    | postfix-expression "--" {{translation_func}}
+  :== primary-expression {{not_implemented_func}}
+    | postfix-expression "[" expression "]" {{not_implemented_func}}
+    | postfix-expression "(" argument-expression-list ")" {{not_implemented_func}}
+    | postfix-expression "(" ")" {{not_implemented_func}}
+    | postfix-expression "." ID {{not_implemented_func}}
+    | postfix-expression "->" ID {{not_implemented_func}}
+    | postfix-expression "++" {{not_implemented_func}}
+    | postfix-expression "--" {{not_implemented_func}}
 
 primary-expression
-  :== ID {{translation_func}}
-    | constant {{translation_func}}
-    | string {{translation_func}}
-    | "(" expression ")" {{translation_func}}
+  :== ID {{not_implemented_func}}
+    | constant {{not_implemented_func}}
+    | string {{not_implemented_func}}
+    | "(" expression ")" {{not_implemented_func}}
 
 argument-expression-list
-  :== assignment-expression {{translation_func}}
-    | argument-expression-list "," assignment-expression {{translation_func}}
+  :== assignment-expression {{not_implemented_func}}
+    | argument-expression-list "," assignment-expression {{not_implemented_func}}
 
 constant
-  :== INTEGER_CONSTANT {{translation_func}}
-    | CHARACTER_CONSTANT {{translation_func}}
-    | FLOAT_CONSTANT {{translation_func}}
-#    | enumeration-constant {{translation_func}}
+  :== INTEGER_CONSTANT {{not_implemented_func}}
+    | CHARACTER_CONSTANT {{not_implemented_func}}
+    | FLOAT_CONSTANT {{not_implemented_func}}
+#    | enumeration-constant {{not_implemented_func}}
 
 
 -----------------------
 
-# from compost.gram.ansic import *
-def start(*args):
-    return None
+from compost.gram.ansic import *
+#def start(*args):
+#    return None
 
-def translation_func(*args):
-    return None
+#def not_implemented_func(*args):
+#    return None

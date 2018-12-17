@@ -103,11 +103,11 @@ class SDT:
                     return translation, self.env
 
     def push_arg(self, token):
-        if token.typ == 'C':
-            token.code = lambda f_cond: 'Ccode Cfalse = {}'.format(f_cond)
-        elif token.typ == 'S1':
-            token.code = lambda : 'S1code'
-        elif token.typ == 'stmts':
-            token.code = lambda : 'stmtscode'
+        # if token.typ == 'C':
+        #    token.code = lambda f_cond: 'Ccode Cfalse = {}'.format(f_cond)
+        # elif token.typ == 'S1':
+        #    token.code = lambda : 'S1code'
+        # elif token.typ == 'stmts':
+        #    token.code = lambda : 'stmtscode'
         self.arg_stack.append(token)
 

@@ -32,9 +32,9 @@ struct closure_t {
 };
 
 struct goto_list_t {
-    sym_ent_t by_sym_ent;                     // goto closure by this by_sym_ent;
-    closure_t closure;                  // goto closure;
-    goto_list_t *next;                     // the next goto item.
+    sym_ent_t by_sym_ent;                   // goto closure by this by_sym_ent;
+    closure_t closure;                      // goto closure;
+    goto_list_t *next;                      // the next goto item.
 };
 
 typedef struct nterm_follow_t {

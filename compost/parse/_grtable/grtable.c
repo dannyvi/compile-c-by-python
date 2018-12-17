@@ -52,7 +52,6 @@ static void init_symbols(PyObject* symbols){
     }
 }
 
-
 // ------------------------------grammar----------------------------------------
 
 prod_t build_production(PyObject *prod ){
@@ -88,8 +87,8 @@ static void init_grammar(PyObject* grammar){
     }
 }
 
-
 //---------------------------------API------------------------------------------
+
 PyObject* grtable_gen_syntax_table(PyObject* self, PyObject* args) {
     PyObject *NT, *T, *V, *symbols, *grammar;
     if (!PyArg_ParseTuple(args, "OOOOO", &NT, &T, &V, &symbols, &grammar)) {
